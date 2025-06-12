@@ -177,7 +177,6 @@
       border-radius: 4px;
       cursor: pointer;
     }
-    /* Inline media modal */
     #media-modal {
       position: fixed;
       top: 0;
@@ -198,8 +197,7 @@
       flex-direction: column;
       align-items: center;
     }
-    #media-modal img,
-    #media-modal video {
+    #media-modal img, #media-modal video {
       max-width: 100%;
       max-height: 80vh;
       border-radius: 4px;
@@ -225,7 +223,6 @@
       background: #f33;
       color: #fff;
     }
-    /* Story-like viewer modal */
     #story-modal {
       position: fixed;
       top: 0;
@@ -239,8 +236,7 @@
       justify-content: center;
       z-index: 1100;
     }
-    #story-modal video,
-    #story-modal img {
+    #story-modal video, #story-modal img {
       max-width: 90vw;
       max-height: 80vh;
       border-radius: 4px;
@@ -274,7 +270,6 @@
       cursor: pointer;
       z-index: 1200;
     }
-    /* Highlights dropdown */
     .highlight-select {
       position: absolute;
       top: 100%;
@@ -326,8 +321,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Inline media modal -->
   <div id="media-modal">
     <div class="modal-content">
       <div id="media-container"></div>
@@ -337,8 +330,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Story-like viewer modal -->
   <div id="story-modal">
     <button class="close-story" id="close-story">Close</button>
     <div class="progress-bar-container">
@@ -346,13 +337,12 @@
     </div>
     <div id="story-media-container"></div>
   </div>
-
   <script>
     const API = "{{ api_url }}";
 
-    document.getElementById('nav-panel').onclick = () => showPanel();
-    document.getElementById('nav-albums').onclick = () => showAlbums();
-    document.getElementById('refresh-btn').onclick = () => loadSubscriptions();
+    document.getElementById('nav-panel').onclick = showPanel;
+    document.getElementById('nav-albums').onclick = showAlbums;
+    document.getElementById('refresh-btn').onclick = loadSubscriptions;
     document.getElementById('btn-add').onclick = () => changeSubs('add', document.getElementById('add-user').value);
     document.getElementById('btn-remove').onclick = () => changeSubs('remove', document.getElementById('remove-user').value);
 
@@ -360,29 +350,33 @@
       document.getElementById('panel-view').style.display = '';
       document.getElementById('albums-view').style.display = 'none';
       document.getElementById('gallery-view').style.display = 'none';
-      document.getElementById('nav-panel').classList.add('active');
-      document.getElementById('nav-albums').classList.remove('active');
+      setActiveNav('nav-panel');
     }
 
     function showAlbums(){
       document.getElementById('panel-view').style.display = 'none';
       document.getElementById('albums-view').style.display = '';
       document.getElementById('gallery-view').style.display = 'none';
-      document.getElementById('nav-panel').classList.remove('active');
-      document.getElementById('nav-albums').classList.add('active');
+      setActiveNav('nav-albums');
       loadSubscriptions();
     }
 
+    function setActiveNav(id){
+      ['nav-panel','nav-albums'].forEach(n=>{
+        document.getElementById(n).classList.toggle('active', n === id);
+      });
+    }
+
     async function changeSubs(path, txt){
-      const users = txt.split(',').map(u => u.trim()).filter(u => u);
+      const users = txt.split(',').map(u=>u.trim()).filter(u=>u);
       if (!users.length) return;
       const res = await fetch(`${API}/users/${path}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({ snap_users: users })
       });
-      const data = await res.json();
-      document.getElementById('status-msg').textContent = data.msg;
+      const { msg } = await res.json();
+      document.getElementById('status-msg').textContent = msg;
       loadSubscriptions();
     }
 
@@ -393,69 +387,64 @@
     }
 
     function renderSubscriptions(list){
-      const c = document.getElementById('albums-list');
-      c.innerHTML = '';
-      list.forEach(u => {
-        const d = document.createElement('div');
-        d.className = 'user-item';
-        d.textContent = u;
-        d.onclick = () => openUserGallery(u);
-        c.append(d);
+      const container = document.getElementById('albums-list');
+      container.innerHTML = '';
+      list.forEach(u=>{
+        const div = document.createElement('div');
+        div.className = 'user-item';
+        div.textContent = u;
+        div.onclick = () => openUserGallery(u);
+        container.append(div);
       });
     }
 
     async function openUserGallery(u){
       const res = await fetch(`${API}/gallery`);
       const { gallery } = await res.json();
-      const entry = gallery.find(e => e.snap_user === u) || { snap_user: u, stories: [], highlights: [], spotlights: [] };
+      const entry = gallery.find(e=>e.snap_user === u) || { snap_user: u, stories: [], highlights: [], spotlights: [] };
       showGallery(entry);
     }
 
     function showGallery(item){
       document.getElementById('albums-view').style.display = 'none';
       document.getElementById('gallery-view').style.display = '';
-      document.getElementById('gallery-title').textContent = item.snap_user + "’s Media";
+      document.getElementById('gallery-title').textContent = `${item.snap_user}’s Media`;
 
       const tabsEl = document.getElementById('tabs');
       tabsEl.innerHTML = '';
 
-      // STORIES tab
       const storiesBtn = document.createElement('button');
       storiesBtn.textContent = `Stories (${item.stories.length})`;
-      storiesBtn.dataset.section = 'stories';
-      storiesBtn.onclick = () => {
-        hideHighlightDropdown();
+      storiesBtn.onclick = ()=>{
+        hideHighlight();
         setActiveTab(storiesBtn);
         renderGrid(item.stories);
       };
       tabsEl.append(storiesBtn);
 
-      // HIGHLIGHTS tab & dropdown
-      let selectEl = null, hlContainer = null;
-      if (item.highlights && item.highlights.length) {
-        // Create highlight dropdown container
+      let selectEl, hlContainer;
+      if (item.highlights.length){
         hlContainer = document.createElement('div');
         hlContainer.className = 'highlight-select';
         selectEl = document.createElement('select');
-        item.highlights.forEach(h => {
-          const opt = document.createElement('option');
-          opt.value = h.album;
-          opt.textContent = `${h.album} (${h.items.length})`;
-          selectEl.append(opt);
+        item.highlights.forEach(h=>{
+          const o = document.createElement('option');
+          o.value = h.album;
+          o.textContent = `${h.album} (${h.items.length})`;
+          selectEl.append(o);
         });
-        selectEl.onchange = () => {
+        selectEl.onchange = ()=>{
           const sel = selectEl.value;
-          const albumObj = item.highlights.find(h => h.album === sel);
-          renderGrid(albumObj.items);
+          const album = item.highlights.find(h=>h.album===sel);
+          renderGrid(album.items);
         };
         hlContainer.append(selectEl);
         tabsEl.append(hlContainer);
 
         const highlightsBtn = document.createElement('button');
         highlightsBtn.textContent = 'Highlights';
-        highlightsBtn.dataset.section = 'highlights';
-        highlightsBtn.onclick = () => {
-          hideHighlightDropdown();
+        highlightsBtn.onclick = ()=>{
+          hideHighlight();
           setActiveTab(highlightsBtn);
           hlContainer.style.display = 'block';
           selectEl.value = item.highlights[0].album;
@@ -464,164 +453,146 @@
         tabsEl.append(highlightsBtn);
       }
 
-      // SPOTLIGHTS tab
       const spotBtn = document.createElement('button');
       spotBtn.textContent = `Spotlights (${item.spotlights.length})`;
-      spotBtn.dataset.section = 'spotlights';
-      spotBtn.onclick = () => {
-        hideHighlightDropdown();
+      spotBtn.onclick = ()=>{
+        hideHighlight();
         setActiveTab(spotBtn);
         renderGrid(item.spotlights);
       };
       tabsEl.append(spotBtn);
 
-      // ALL tab
       const allBtn = document.createElement('button');
       allBtn.textContent = 'All';
-      allBtn.dataset.section = 'all';
-      allBtn.onclick = () => {
-        hideHighlightDropdown();
+      allBtn.onclick = ()=>{
+        hideHighlight();
         setActiveTab(allBtn);
         openStoryViewer(item);
       };
       tabsEl.append(allBtn);
 
-      function hideHighlightDropdown() {
-        document.querySelectorAll('.highlight-select').forEach(el => el.style.display = 'none');
+      function hideHighlight(){
+        document.querySelectorAll('.highlight-select').forEach(el=>el.style.display='none');
       }
-      function setActiveTab(btn) {
-        document.querySelectorAll('#tabs button').forEach(b => b.classList.remove('active'));
+      function setActiveTab(btn){
+        tabsEl.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
         btn.classList.add('active');
       }
 
-      // Activate Stories by default
       storiesBtn.click();
     }
 
     function renderGrid(urls){
-      const g = document.getElementById('gallery-grid');
-      g.innerHTML = '';
-      urls.forEach(url => {
+      const grid = document.getElementById('gallery-grid');
+      grid.innerHTML = '';
+      urls.forEach(url=>{
         const card = document.createElement('div');
         card.className = 'story-card';
         const thumb = document.createElement('div');
         thumb.className = 'story-thumb';
         thumb.style.backgroundImage = `url('${url}')`;
-        thumb.onclick = () => openMediaModal(url);
+        thumb.onclick = ()=> openMediaModal(url);
         const info = document.createElement('div');
         info.className = 'story-info';
         info.textContent = 'View';
-        info.onclick = () => openMediaModal(url);
+        info.onclick = ()=> openMediaModal(url);
         card.append(thumb, info);
-        g.append(card);
+        grid.append(card);
       });
     }
 
-    // Inline media modal
     const mediaModal = document.getElementById('media-modal');
     const mediaContainer = document.getElementById('media-container');
     const downloadBtn = document.getElementById('download-btn');
     const closeModalBtn = document.getElementById('close-modal');
 
-    function openMediaModal(url) {
+    function openMediaModal(url){
       mediaContainer.innerHTML = '';
-      let mediaElem;
-      if (url.toLowerCase().endsWith('.mp4')) {
-        mediaElem = document.createElement('video');
-        mediaElem.src = url;
-        mediaElem.controls = true;
-        mediaElem.autoplay = true;
+      let el;
+      if (['.mp4','.webm','.ogg'].some(ext=>url.toLowerCase().endsWith(ext))){
+        el = document.createElement('video');
+        el.src = url;
+        el.controls = true;
+        el.autoplay = true;
       } else {
-        mediaElem = document.createElement('img');
-        mediaElem.src = url;
+        el = document.createElement('img');
+        el.src = url;
       }
-      mediaContainer.append(mediaElem);
+      mediaContainer.append(el);
       downloadBtn.href = url;
       mediaModal.style.display = 'flex';
     }
 
-    closeModalBtn.onclick = () => {
+    closeModalBtn.onclick = ()=>{
       mediaModal.style.display = 'none';
       mediaContainer.innerHTML = '';
     };
-    mediaModal.onclick = e => {
+    mediaModal.onclick = e=>{
       if (e.target === mediaModal) closeModalBtn.click();
     };
 
-    // Story-like viewer
     const storyModal = document.getElementById('story-modal');
     const storyMediaContainer = document.getElementById('story-media-container');
     const storyProgressBar = document.getElementById('story-progress');
     const closeStoryBtn = document.getElementById('close-story');
-    let storyItems = [];
-    let storyIndex = 0;
-    let storyTimer;
-    let storyStartTime;
-    let storyDuration = 5000;
+    let storyItems = [], storyIndex=0, storyTimer, storyStartTime, storyDuration=5000;
 
-    function openStoryViewer(item) {
+    function openStoryViewer(item){
       storyItems = [];
-      item.stories.forEach(u => storyItems.push({url: u, type: 'image'}));
-      item.highlights.forEach(h => h.items.forEach(u => storyItems.push({url: u, type: 'image'})));
-      item.spotlights.forEach(u => storyItems.push({url: u, type: 'video'}));
-      if (!storyItems.length) {
-        alert('No media to play');
-        return;
-      }
+      item.stories.forEach(u=>storyItems.push({url:u,type:'image'}));
+      item.highlights.forEach(h=>h.items.forEach(u=>storyItems.push({url:u,type:'image'})));
+      item.spotlights.forEach(u=>storyItems.push({url:u,type:'video'}));
+      if (!storyItems.length) { alert("No media"); return; }
       storyIndex = 0;
       showStoryModal();
     }
 
-    function showStoryModal() {
+    function showStoryModal(){
       storyModal.style.display = 'flex';
       playCurrentStory();
     }
 
-    function playCurrentStory() {
+    function playCurrentStory(){
       clearTimeout(storyTimer);
       storyMediaContainer.innerHTML = '';
       storyProgressBar.style.width = '0%';
-      const { url, type } = storyItems[storyIndex];
-      let elem;
-      if (type === 'video') {
-        elem = document.createElement('video');
-        elem.src = url;
-        elem.autoplay = true;
-        elem.onloadedmetadata = () => startProgress(elem.duration * 1000);
-        elem.onended = nextStory;
+      const {url,type} = storyItems[storyIndex];
+      let el;
+      if (type === 'video'){
+        el = document.createElement('video');
+        el.src = url;
+        el.autoplay = true;
+        el.onloadedmetadata = ()=>startProgress(el.duration*1000);
+        el.onended = nextStory;
       } else {
-        elem = document.createElement('img');
-        elem.src = url;
+        el = document.createElement('img');
+        el.src = url;
         startProgress(5000);
       }
-      storyMediaContainer.append(elem);
+      storyMediaContainer.append(el);
     }
 
-    function startProgress(duration) {
+    function startProgress(duration){
       storyStartTime = Date.now();
       storyDuration = duration;
-      (function update() {
-        const elapsed = Date.now() - storyStartTime;
-        const pct = Math.min((elapsed / storyDuration) * 100, 100);
-        storyProgressBar.style.width = pct + '%';
+      (function update(){
+        const pct = Math.min((Date.now()-storyStartTime)/storyDuration*100,100);
+        storyProgressBar.style.width = pct+'%';
         if (pct < 100) requestAnimationFrame(update);
       })();
-      if (storyItems[storyIndex].type === 'image') {
+      if (storyItems[storyIndex].type==='image'){
         storyTimer = setTimeout(nextStory, storyDuration);
       }
     }
 
-    function nextStory() {
+    function nextStory(){
       clearTimeout(storyTimer);
       storyIndex++;
-      if (storyIndex < storyItems.length) {
-        playCurrentStory();
-      } else {
-        closeStoryViewer();
-      }
+      if (storyIndex < storyItems.length) playCurrentStory();
+      else closeStoryViewer();
     }
 
-    function closeStoryViewer() {
+    function closeStoryViewer(){
       clearTimeout(storyTimer);
       storyModal.style.display = 'none';
       storyMediaContainer.innerHTML = '';
@@ -629,10 +600,8 @@
     }
 
     closeStoryBtn.onclick = closeStoryViewer;
+    document.getElementById('back-button').onclick = showAlbums;
 
-    document.getElementById('back-button').onclick = () => showAlbums();
-
-    // Initialize
     showPanel();
   </script>
 </body>
