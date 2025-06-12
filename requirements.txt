@@ -3,6 +3,7 @@ uvicorn[standard]
 sqlalchemy
 passlib[bcrypt]
 jinja2
+bcrypt
 aiofiles
 psycopg2-binary
 httpx
