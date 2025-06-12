@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>SnapViewer</title>
+  <style>
+    :root {
+      --yellow: #FFFC00; --black: #111; --white: #FFF; --font: 'Segoe UI', sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box }
+    body {
+      font-family: var(--font);
+      background: var(--yellow);
+      color: var(--black);
+      height:100vh;
+      display:grid;
+      grid-template-columns:200px 1fr;
+    }
+    .sidebar {
+      background: var(--black);
+      color: var(--yellow);
+      display:flex;
+      flex-direction:column;
+    }
+    .sidebar h2 {
+      padding:1rem;
+      border-bottom:1px solid #333;
+      font-size:1.2rem;
+    }
+    .nav-item {
+      padding:0.8rem 1rem;
+      cursor:pointer;
+      border-bottom:1px solid #333;
+    }
+    .nav-item.active, .nav-item:hover {
+      background: #222;
+    }
+    .main {
+      padding:1rem;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      height:100%;
+    }
+    header {
+      display:flex; justify-content:space-between; align-items:center;
+      background:#1a1a1a; color:var(--yellow);
+      padding:0.5rem 1rem; border-radius:4px;
+    }
+    .logout {
+      background:none;border:1px solid var(--yellow);
+      color:var(--yellow);padding:0.3rem 0.8rem;border-radius:4px;
+      cursor:pointer;
+    }
+    .panel, #login-view, #register-view {
+      margin-top:1rem;
+      background:#1a1a1a;
+      padding:1rem;
+      border-radius:4px;
+    }
+    .panel input, #login-view input, #register-view input { 
+      width:100%; padding:0.5rem; border:none; border-radius:4px; margin-bottom:0.5rem;
+    }
+    .panel button, #login-view button, #register-view button {
+      width:100%; padding:0.6rem; border:none; border-radius:4px;
+      background:var(--yellow); color:var(--black); font-weight:bold; cursor:pointer;
+    }
+    .status {
+      margin-top:0.5rem; color:#080; font-size:0.9rem;
+    }
+    .error {
+      margin-top:0.5rem; color:#f66; font-size:0.9rem;
+    }
+    .albums-list {
+      margin-top:1rem;
+      background:#1a1a1a; border-radius:4px; overflow:auto;
+      flex:1;
+    }
+    .albums-list .user-item {
+      padding:0.7rem 1rem; border-bottom:1px solid #333;
+      cursor:pointer; color:var(--yellow); display:flex; justify-content:space-between;
+    }
+    .albums-list .user-item:hover { background:#222; }
+    .albums-list .user-item .status-indicator {
+      font-size:0.8rem; color:#888;
+    }
+    .gallery-container {
+      margin-top:1rem; display:flex; flex-direction:column; flex:1; overflow:auto;
+    }
+    .tabs {
+      display:flex; gap:0.5rem; flex-wrap: wrap;
+      position: relative;
+    }
+    .tabs button {
+      background:#333; color:var(--yellow); border:none; padding:0.5rem 1rem; border-radius:4px; cursor:pointer;
+    }
+    .tabs button.active {
+      background:var(--yellow); color:var(--black);
+    }
+    .gallery-grid {
+      margin-top:1rem;
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
+      gap:0.8rem;
+      overflow:auto;
+      flex:1;
+    }
+    .story-card {
+      background:#fff;
+      border-radius:4px; overflow:hidden; cursor:pointer;
+      display:flex; flex-direction:column;
+    }
+    .story-thumb {
+      width:100%; padding-top:100%; background-size:cover; background-position:center;
+    }
+    .story-info {
+      padding:0.4rem; background:#1a1a1a; color:var(--yellow);
+      text-align:center; font-size:0.85rem;
+    }
+    .back-button {
+      margin-top:0.5rem; background:#333; color:var(--yellow); border:none; padding:0.4rem 0.8rem; border-radius:4px; cursor:pointer;
+    }
+    /* Inline media modal */
+    #media-modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    #media-modal .modal-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #media-modal img, #media-modal video {
+      max-width: 100%;
+      max-height: 80vh;
+      border-radius: 4px;
+      background: #000;
+    }
+    #media-modal .modal-buttons {
+      margin-top: 0.5rem;
+      display: flex;
+      gap: 1rem;
+    }
+    #media-modal .modal-buttons a,
+    #media-modal .modal-buttons button {
+      background: var(--yellow);
+      color: var(--black);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    #media-modal .modal-buttons button {
+      background: #f33;
+      color: #fff;
+    }
+    /* Story-like viewer modal */
+    #story-modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1100;
+    }
+    #story-modal video, #story-modal img {
+      max-width: 90vw;
+      max-height: 80vh;
+      border-radius: 4px;
+      background: #000;
+    }
+    #story-modal .progress-bar-container {
+      position: absolute;
+      top: 20px;
+      left: 10%;
+      width: 80%;
+      height: 5px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 2px;
+    }
+    #story-modal .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: var(--yellow);
+      border-radius: 2px;
+      transition: width 0.1s linear;
+    }
+    #story-modal .close-story {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      background: #f33;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      z-index: 1200;
+    }
+    /* Highlights dropdown */
+    .highlight-select {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: #333;
+      color: var(--yellow);
+      border: 1px solid #555;
+      border-radius: 4px;
+      display: none;
+      z-index: 100;
+    }
+    .highlight-select select {
+      background: #333;
+      color: var(--yellow);
+      border: none;
+      padding: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Snapify</h2>
+    <div id="nav-panel" class="nav-item active">Panel</div>
+    <div id="nav-albums" class="nav-item">Albums</div>
+  </div>
+
+  <div class="main">
+    <header>
+      <div>Welcome, <span id="me"></span></div>
+      <button class="logout" id="logout-btn" style="display:none;">Log Out</button>
+    </header>
+
+    <div id="auth-views">
+      <div id="login-view" class="panel">
+        <h3>Login</h3>
+        <input id="login-username" placeholder="Username">
+        <input id="login-password" type="password" placeholder="Password">
+        <button id="login-btn">Log In</button>
+        <div class="status" id="login-status"></div>
+        <p style="margin-top:0.5rem; color:var(--yellow); cursor:pointer;" id="show-register">Don't have an account? Register</p>
+      </div>
+      <div id="register-view" class="panel" style="display:none;">
+        <h3>Register</h3>
+        <input id="register-username" placeholder="Username">
+        <input id="register-password" type="password" placeholder="Password">
+        <button id="register-btn">Register</button>
+        <div class="status" id="register-status"></div>
+        <p style="margin-top:0.5rem; color:var(--yellow); cursor:pointer;" id="show-login">Already have an account? Login</p>
+      </div>
+    </div>
+
+    <div id="app-view" style="display:none; flex:1; flex-direction:column;">
+      <div id="panel-view" class="panel">
+        <h3>Add / Remove Users</h3>
+        <input id="add-user" placeholder="Add usernames, comma-sep">
+        <button id="btn-add">Add & Monitor</button>
+        <input id="remove-user" placeholder="Remove usernames, comma-sep" style="margin-top:0.8rem;">
+        <button id="btn-remove">Remove</button>
+        <div class="status" id="status-msg"></div>
+      </div>
+
+      <div id="albums-view" style="display:none; flex:1; flex-direction:column;">
+        <h3>Your Subscribed Users</h3>
+        <div class="albums-list" id="albums-list"></div>
+      </div>
+
+      <div id="gallery-view" style="display:none; flex:1; flex-direction:column;">
+        <button class="back-button" id="back-button">← Back to Albums</button>
+        <h3 id="gallery-title">Media</h3>
+        <div class="gallery-container">
+          <div class="tabs" id="tabs"></div>
+          <div class="gallery-grid" id="gallery-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline media modal -->
+  <div id="media-modal">
+    <div class="modal-content">
+      <div id="media-container"></div>
+      <div class="modal-buttons">
+        <a id="download-btn" href="#" download>Download</a>
+        <button id="close-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Story-like viewer modal -->
+  <div id="story-modal">
+    <button class="close-story" id="close-story">Close</button>
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="story-progress"></div>
+    </div>
+    <div id="story-media-container"></div>
+  </div>
+
+  <script>
+    const API = "";
+    let pollGalleryInterval = null;
+    let currentViewingUser = null;
+
+    // Story viewer state
+    let storyItems = [];
+    let storyIndex = 0;
+    let storyTimer = null;
+    let storyStartTime = null;
+    let storyDuration = 5000;
+    let storyMediaElem = null;
+
+    function switchView(view) {
+      document.getElementById('nav-panel').classList.toggle('active', view==='panel');
+      document.getElementById('nav-albums').classList.toggle('active', view==='albums');
+      document.getElementById('panel-view').style.display = view==='panel' ? '' : 'none';
+      document.getElementById('albums-view').style.display = view==='albums' ? '' : 'none';
+      document.getElementById('gallery-view').style.display = 'none';
+      stopGalleryPolling();
+    }
+
+    function logoutClient(){
+      document.getElementById('app-view').style.display = 'none';
+      document.getElementById('auth-views').style.display = '';
+      document.getElementById('logout-btn').style.display = 'none';
+      document.getElementById('me').textContent = '';
+      stopGalleryPolling();
+    }
+
+    async function doLogin(username, password) {
+      const res = await fetch(`${API}/login`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(()=>null);
+        throw new Error(err?.detail || 'Login failed');
+      }
+    }
+    async function doRegister(username, password) {
+      const res = await fetch(`${API}/register`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(()=>null);
+        throw new Error(err?.detail || 'Register failed');
+      }
+    }
+    async function doLogout() {
+      await fetch(`${API}/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      logoutClient();
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      fetch(`${API}/subscriptions`, { method:'GET', credentials:'include' })
+        .then(res=>{
+          if (res.ok) {
+            document.getElementById('auth-views').style.display = 'none';
+            document.getElementById('app-view').style.display = '';
+            document.getElementById('logout-btn').style.display = '';
+            const m = document.cookie.match(/username=([^;]+)/);
+            if (m) document.getElementById('me').textContent = decodeURIComponent(m[1]);
+            switchView('panel');
+            loadSubscriptions();
+            startMonitor();
+          } else {
+            document.getElementById('auth-views').style.display = '';
+            document.getElementById('app-view').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'none';
+          }
+        })
+        .catch(()=>{
+          document.getElementById('auth-views').style.display = '';
+          document.getElementById('app-view').style.display = 'none';
+          document.getElementById('logout-btn').style.display = 'none';
+        });
+    });
+
+    document.getElementById('login-btn').onclick = async ()=>{
+      const user = document.getElementById('login-username').value;
+      const pw = document.getElementById('login-password').value;
+      const statusEl = document.getElementById('login-status');
+      statusEl.textContent = '';
+      try {
+        await doLogin(user, pw);
+        document.getElementById('auth-views').style.display = 'none';
+        document.getElementById('app-view').style.display = '';
+        document.getElementById('logout-btn').style.display = '';
+        document.getElementById('me').textContent = user;
+        switchView('panel');
+        loadSubscriptions();
+        startMonitor();
+      } catch(e) {
+        statusEl.textContent = e.message;
+      }
+    };
+    document.getElementById('register-btn').onclick = async ()=>{
+      const user = document.getElementById('register-username').value;
+      const pw = document.getElementById('register-password').value;
+      const statusEl = document.getElementById('register-status');
+      statusEl.textContent = '';
+      try {
+        await doRegister(user, pw);
+        statusEl.textContent = 'Registered! You can now log in.';
+      } catch(e) {
+        statusEl.textContent = e.message;
+      }
+    };
+    document.getElementById('show-register').onclick = ()=>{
+      document.getElementById('login-view').style.display = 'none';
+      document.getElementById('register-view').style.display = '';
+    };
+    document.getElementById('show-login').onclick = ()=>{
+      document.getElementById('register-view').style.display = 'none';
+      document.getElementById('login-view').style.display = '';
+    };
+    document.getElementById('logout-btn').onclick = async ()=>{
+      await doLogout();
+    };
+
+    document.getElementById('btn-add').onclick = ()=> {
+      changeSubs('add', document.getElementById('add-user').value);
+    };
+    document.getElementById('btn-remove').onclick = ()=> {
+      changeSubs('remove', document.getElementById('remove-user').value);
+    };
+    document.getElementById('nav-panel').onclick = ()=> switchView('panel');
+    document.getElementById('nav-albums').onclick = ()=> switchView('albums');
+
+    async function startMonitor(){
+      await fetch(`${API}/monitor/start`, {
+        method:'POST',
+        credentials: 'include'
+      });
+    }
+
+    async function loadSubscriptions(){
+      const res = await fetch(`${API}/subscriptions`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      if (res.status === 401) { logoutClient(); return; }
+      const data = await res.json();
+      renderSubscriptions(data.subscriptions);
+      startGalleryPolling();
+    }
+
+    function renderSubscriptions(subsList){
+      const list = document.getElementById('albums-list');
+      list.innerHTML = '';
+      subsList.forEach(username=>{
+        const div = document.createElement('div');
+        div.className = 'user-item';
+        div.textContent = username;
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'status-indicator';
+        statusSpan.textContent = '';
+        div.append(statusSpan);
+        div.onclick = ()=> openUserGallery(username);
+        list.append(div);
+      });
+    }
+
+    async function changeSubs(path, txt){
+      const users = txt.split(',').map(u=>u.trim()).filter(u=>u);
+      if (!users.length) return;
+      const res = await fetch(`${API}/users/${path}`, {
+        method:'POST',
+        credentials: 'include',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ snap_users: users })
+      });
+      if (res.status === 401) { logoutClient(); return; }
+      const data = await res.json();
+      if (path === 'add' && data.added && data.added.length) {
+        document.getElementById('status-msg').textContent = 'Added: ' + data.added.join(', ');
+      } else if (path === 'remove') {
+        document.getElementById('status-msg').textContent = 'Removed: ' + (data.removed||[]).join(', ');
+      }
+      loadSubscriptions();
+    }
+
+    function startGalleryPolling(){
+      if (pollGalleryInterval) return;
+      pollGalleryInterval = setInterval(async ()=>{
+        const res = await fetch(`${API}/gallery`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (res.status === 401) { logoutClient(); return; }
+        const { gallery } = await res.json();
+        updateAlbumsStatus(gallery);
+        if (currentViewingUser) {
+          const entry = gallery.find(e => e.snap_user === currentViewingUser);
+          if (entry) updateUserGallery(entry);
+        }
+      }, 5000);
+    }
+    function stopGalleryPolling(){
+      if (pollGalleryInterval) {
+        clearInterval(pollGalleryInterval);
+        pollGalleryInterval = null;
+      }
+    }
+
+    function updateAlbumsStatus(galleryData){
+      document.querySelectorAll('#albums-list .user-item').forEach(div=>{
+        const username = div.firstChild.textContent;
+        const span = div.querySelector('.status-indicator');
+        const entry = galleryData.find(e => e.snap_user === username);
+        if (entry) {
+          const hasMedia = (entry.stories && entry.stories.length)
+                        || (entry.highlights && entry.highlights.some(h=>h.items.length))
+                        || (entry.spotlights && entry.spotlights.length);
+          span.textContent = hasMedia ? ' •' : '';
+        } else {
+          span.textContent = '';
+        }
+      });
+    }
+
+    function openUserGallery(username){
+      currentViewingUser = username;
+      fetch(`${API}/gallery`, { method:'GET', credentials:'include' })
+        .then(res=>{
+          if (res.status === 401) { logoutClient(); return null; }
+          return res.json();
+        })
+        .then(data=>{
+          if (!data) return;
+          const entry = data.gallery.find(e => e.snap_user === username);
+          if (entry) showGallery(entry);
+          else showGallery({ snap_user: username, stories: [], highlights: [], spotlights: [] });
+        });
+    }
+
+    function showGallery(item){
+      stopGalleryPolling();
+      document.getElementById('gallery-title').textContent = item.snap_user + "’s Media";
+      const tabsEl = document.getElementById('tabs');
+      tabsEl.innerHTML = '';
+
+      // STORIES tab
+      const storiesBtn = document.createElement('button');
+      storiesBtn.textContent = `Stories (${(item.stories||[]).length})`;
+      storiesBtn.dataset.section = 'stories';
+      storiesBtn.onclick = ()=>{
+        hideHighlightSelect();
+        document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+        storiesBtn.classList.add('active');
+        renderGrid(item.snap_user, 'stories', item.stories || []);
+      };
+      tabsEl.append(storiesBtn);
+
+      // HIGHLIGHTS tab & dropdown
+      let selectEl = null;
+      if (item.highlights && item.highlights.length) {
+        const highlightsBtn = document.createElement('button');
+        highlightsBtn.textContent = 'Highlights';
+        highlightsBtn.dataset.section = 'highlights';
+        highlightsBtn.onclick = ()=>{
+          document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+          highlightsBtn.classList.add('active');
+          // show dropdown
+          showHighlightSelect();
+          // render first album by default
+          const first = item.highlights[0];
+          renderGrid(item.snap_user, 'highlights', first.items);
+          selectEl.value = first.album;
+        };
+        tabsEl.append(highlightsBtn);
+
+        // Dropdown container
+        const hlContainer = document.createElement('div');
+        hlContainer.className = 'highlight-select';
+        selectEl = document.createElement('select');
+        item.highlights.forEach(h=>{
+          const opt = document.createElement('option');
+          opt.value = h.album;
+          opt.textContent = `${h.album} (${h.items.length})`;
+          selectEl.append(opt);
+        });
+        selectEl.onchange = ()=>{
+          const sel = selectEl.value;
+          const albumObj = item.highlights.find(h=>h.album===sel);
+          if (albumObj) {
+            renderGrid(item.snap_user, 'highlights', albumObj.items);
+          }
+        };
+        hlContainer.append(selectEl);
+        tabsEl.append(hlContainer);
+
+        // Helpers to show/hide
+        function hideHighlightSelect() {
+          document.querySelectorAll('.highlight-select').forEach(el=>el.style.display='none');
+        }
+        function showHighlightSelect() {
+          document.querySelectorAll('.highlight-select').forEach(el=>el.style.display='none');
+          hlContainer.style.display = 'block';
+        }
+      }
+
+      // SPOTLIGHTS tab
+      const spotBtn = document.createElement('button');
+      spotBtn.textContent = `Spotlights (${(item.spotlights||[]).length})`;
+      spotBtn.dataset.section = 'spotlights';
+      spotBtn.onclick = ()=>{
+        hideHighlightSelect();
+        document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+        spotBtn.classList.add('active');
+        renderGrid(item.snap_user, 'spotlights', item.spotlights || []);
+      };
+      tabsEl.append(spotBtn);
+
+      // ALL tab last
+      const allBtn = document.createElement('button');
+      allBtn.textContent = 'All';
+      allBtn.dataset.section = 'all';
+      allBtn.onclick = ()=>{
+        hideHighlightSelect();
+        document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
+        allBtn.classList.add('active');
+        openStoryViewer(item);
+      };
+      tabsEl.append(allBtn);
+
+      // Clear any existing select display
+      if (selectEl) {
+        document.querySelectorAll('.highlight-select').forEach(el=>el.style.display='none');
+      }
+
+      // By default, activate Stories tab (or if you prefer, you can auto-open All)
+      storiesBtn.click();
+
+      document.getElementById('panel-view').style.display = 'none';
+      document.getElementById('albums-view').style.display = 'none';
+      document.getElementById('gallery-view').style.display = '';
+      document.getElementById('nav-panel').classList.remove('active');
+      document.getElementById('nav-albums').classList.remove('active');
+
+      startGalleryPolling();
+    }
+
+    function updateUserGallery(entry){
+      // Update tab counts/text
+      document.querySelectorAll('#tabs button').forEach(btn=>{
+        const sec = btn.dataset.section;
+        if (sec==='stories') {
+          btn.textContent = `Stories (${(entry.stories||[]).length})`;
+        } else if (sec==='spotlights') {
+          btn.textContent = `Spotlights (${(entry.spotlights||[]).length})`;
+        } else if (sec==='highlights') {
+          btn.textContent = `Highlights`;
+          // update select options
+          const selectEl = document.querySelector('.highlight-select select');
+          if (selectEl) {
+            selectEl.innerHTML = '';
+            entry.highlights.forEach(h=>{
+              const opt = document.createElement('option');
+              opt.value = h.album;
+              opt.textContent = `${h.album} (${h.items.length})`;
+              selectEl.append(opt);
+            });
+          }
+        }
+      });
+      // If currently in story viewer (All), rebuild storyItems
+      if (currentViewingUser) {
+        const activeBtn = document.querySelector('#tabs button.active');
+        if (activeBtn && activeBtn.dataset.section==='all') {
+          openStoryViewer(entry, true);
+        }
+      }
+    }
+
+    function renderGrid(username, sectionKey, urls) {
+      const grid = document.getElementById('gallery-grid');
+      grid.innerHTML = '';
+      urls.forEach(url=>{
+        const card = document.createElement('div');
+        card.className = 'story-card';
+        const thumb = document.createElement('div');
+        thumb.className = 'story-thumb';
+        thumb.style.backgroundImage = `url('${url}')`;
+        thumb.onclick = ()=> openMediaModal(url);
+        const info = document.createElement('div');
+        info.className = 'story-info';
+        info.textContent = 'View';
+        info.onclick = ()=> openMediaModal(url);
+        card.append(thumb, info);
+        grid.append(card);
+      });
+    }
+
+    // Inline media modal logic
+    const mediaModal = document.getElementById('media-modal');
+    const mediaContainer = document.getElementById('media-container');
+    const downloadBtn = document.getElementById('download-btn');
+    const closeModalBtn = document.getElementById('close-modal');
+
+    function openMediaModal(url) {
+      mediaContainer.innerHTML = '';
+      const lower = url.toLowerCase();
+      let mediaElem;
+      if (lower.endsWith('.mp4') || lower.endsWith('.webm') || lower.endsWith('.ogg')) {
+        mediaElem = document.createElement('video');
+        mediaElem.src = url;
+        mediaElem.controls = true;
+        mediaElem.autoplay = true;
+      } else {
+        mediaElem = document.createElement('img');
+        mediaElem.src = url;
+      }
+      mediaContainer.append(mediaElem);
+      downloadBtn.href = url;
+      downloadBtn.download = "";
+      mediaModal.style.display = 'flex';
+    }
+
+    closeModalBtn.onclick = ()=>{
+      mediaModal.style.display = 'none';
+      const vid = mediaContainer.querySelector('video');
+      if (vid) {
+        vid.pause();
+        vid.src = "";
+      }
+      mediaContainer.innerHTML = '';
+    };
+    mediaModal.onclick = (e)=>{
+      if (e.target === mediaModal) {
+        closeModalBtn.click();
+      }
+    };
+
+    // Story-like viewer logic
+    const storyModal = document.getElementById('story-modal');
+    const storyMediaContainer = document.getElementById('story-media-container');
+    const storyProgressBar = document.getElementById('story-progress');
+    const closeStoryBtn = document.getElementById('close-story');
+
+    function openStoryViewer(item, isUpdate=false) {
+      // Build storyItems array
+      const arr = [];
+      (item.stories||[]).forEach(url=>{
+        arr.push({url, type: inferType(url)});
+      });
+      (item.highlights||[]).forEach(h=>{
+        h.items.forEach(url=>{
+          arr.push({url, type: inferType(url)});
+        });
+      });
+      (item.spotlights||[]).forEach(url=>{
+        arr.push({url, type: inferType(url)});
+      });
+      storyItems = arr;
+      if (!storyItems.length) {
+        alert("No media to play");
+        return;
+      }
+      if (!isUpdate) {
+        storyIndex = 0;
+        showStoryModal();
+      } else {
+        // If updating mid-play: if index beyond length, reset
+        if (storyIndex >= storyItems.length) storyIndex = 0;
+        // continue playing current or next
+        playCurrentStory();
+      }
+    }
+
+    function inferType(url) {
+      const l = url.toLowerCase();
+      if (l.endsWith('.mp4') || l.endsWith('.webm') || l.endsWith('.ogg')) return 'video';
+      return 'image';
+    }
+
+    function showStoryModal() {
+      storyModal.style.display = 'flex';
+      storyIndex = 0;
+      playCurrentStory();
+    }
+
+    function playCurrentStory() {
+      clearTimeout(storyTimer);
+      storyMediaContainer.innerHTML = '';
+      storyProgressBar.style.width = '0%';
+      const {url, type} = storyItems[storyIndex];
+      let elem;
+      if (type==='video') {
+        elem = document.createElement('video');
+        elem.src = url;
+        elem.controls = false;
+        elem.autoplay = true;
+        elem.muted = false;
+        elem.onloadedmetadata = ()=>{
+          const dur = elem.duration * 1000;
+          startProgress(dur);
+        };
+        elem.onended = ()=>{
+          nextStory();
+        };
+      } else {
+        elem = document.createElement('img');
+        elem.src = url;
+        startProgress(5000);
+      }
+      storyMediaContainer.append(elem);
+      storyMediaElem = elem;
+      if (type==='image') {
+        storyTimer = setTimeout(()=>{
+          nextStory();
+        }, 5000);
+      }
+    }
+
+    function startProgress(duration) {
+      storyStartTime = Date.now();
+      storyDuration = duration;
+      function update() {
+        const elapsed = Date.now() - storyStartTime;
+        const pct = Math.min((elapsed / storyDuration)*100, 100);
+        storyProgressBar.style.width = pct + '%';
+        if (pct < 100) {
+          requestAnimationFrame(update);
+        }
+      }
+      requestAnimationFrame(update);
+    }
+
+    function nextStory() {
+      clearTimeout(storyTimer);
+      storyIndex++;
+      if (storyIndex < storyItems.length) {
+        playCurrentStory();
+      } else {
+        closeStoryViewer();
+      }
+    }
+
+    function closeStoryViewer() {
+      clearTimeout(storyTimer);
+      const vid = storyMediaContainer.querySelector('video');
+      if (vid) {
+        vid.pause();
+        vid.src = "";
+      }
+      storyMediaContainer.innerHTML = '';
+      storyProgressBar.style.width = '0%';
+      storyModal.style.display = 'none';
+    }
+
+    closeStoryBtn.onclick = closeStoryViewer;
+    storyModal.onclick = (e)=>{
+      if (e.target === storyModal) {
+        closeStoryViewer();
+      }
+    };
+
+    document.getElementById('back-button').onclick = ()=>{
+      currentViewingUser = null;
+      stopGalleryPolling();
+      switchView('albums');
+      loadSubscriptions();
+    };
+  </script>
+</body>
+</html>
