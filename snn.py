@@ -1,4 +1,5 @@
 import os
+import json
 import threading
 import time
 import httpx
@@ -11,42 +12,22 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sqlalchemy import create_engine, Column, String, Integer, Table, MetaData
-from sqlalchemy.orm import sessionmaker
 from passlib.hash import bcrypt
 
 SERVICE_URL = "http://snapify-dkzn.onrender.com"
-# --- Database setup ---
-# Read DATABASE_URL from env; fallback to local SQLite
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./snaps.db")
-if DATABASE_URL.startswith("sqlite"):
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-else:
-    engine = create_engine(DATABASE_URL)
-metadata = MetaData()
+BASE_MEDIA_DIR = "snap_media"
+USERS_FILE = "users.json"
+SUBS_FILE = "subscriptions.json"
+_lock = threading.Lock()
 
-users = Table(
-    "users", metadata,
-    Column("id", Integer, primary_key=True),
-    Column("username", String, unique=True, index=True),
-    Column("password_hash", String),
-)
+# Ensure storage files exist
+for file, default in [(USERS_FILE, []), (SUBS_FILE, [])]:
+    if not os.path.isfile(file):
+        with open(file, 'w') as f:
+            json.dump(default, f)
 
-subscriptions = Table(
-    "subscriptions", metadata,
-    Column("id", Integer, primary_key=True),
-    Column("owner", String, index=True),
-    Column("snap_user", String),
-)
-
-# Create tables if they don't exist
-metadata.create_all(engine)
-SessionLocal = sessionmaker(bind=engine)
-
-# --- FastAPI setup ---
+# FastAPI setup
 app = FastAPI()
-
-# CORS for preflight (dev). Restrict allow_origins in prod.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -55,36 +36,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Base media dir
-BASE_MEDIA_DIR = "snap_media"
+# Static files for media
 if not os.path.isdir(BASE_MEDIA_DIR):
     os.makedirs(BASE_MEDIA_DIR, exist_ok=True)
-
-# Mount static files at /snap_media
 app.mount("/snap_media", StaticFiles(directory=BASE_MEDIA_DIR), name="snap_media")
 
 templates = Jinja2Templates(directory="templates")
 
-# Track which users have a monitor loop started
+# In-memory set for monitors
 _monitors_started = set()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Utility file operations
 
-def get_current_user(request: Request, db=Depends(get_db)):
-    username = request.cookies.get("username")
-    if not username:
-        raise HTTPException(status_code=401, detail="Not logged in")
-    row = db.execute(users.select().where(users.c.username == username)).first()
-    if not row:
-        raise HTTPException(status_code=401, detail="Invalid user")
-    return username
+def load_users():
+    with open(USERS_FILE, 'r') as f:
+        return json.load(f)
 
-# --- Schemas ---
+def save_users(data):
+    with open(USERS_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+
+def load_subs():
+    with open(SUBS_FILE, 'r') as f:
+        return json.load(f)
+
+def save_subs(data):
+    with open(SUBS_FILE, 'w') as f:
+        json.dump(data, f, indent=2)
+
+# Models
 class RegisterIn(BaseModel):
     username: str
     password: str
@@ -95,8 +75,19 @@ class LoginIn(BaseModel):
 
 class SubscriptionAction(BaseModel):
     snap_users: List[str]
-# --- Routes ---
 
+# Auth dependency
+
+def get_current_user(request: Request):
+    username = request.cookies.get("username")
+    if not username:
+        raise HTTPException(status_code=401, detail="Not logged in")
+    users = load_users()
+    if username not in {u['username'] for u in users}:
+        raise HTTPException(status_code=401, detail="Invalid user")
+    return username
+
+# Ping on startup
 @app.on_event("startup")
 async def schedule_ping_task():
     async def ping_loop():
@@ -120,22 +111,23 @@ def index(request: Request):
     return templates.TemplateResponse("main.html", {"request": request, "api_url": ""})
 
 @app.post("/register", status_code=201)
-def register(data: RegisterIn, db=Depends(get_db)):
-    if db.execute(users.select().where(users.c.username == data.username)).first():
-        raise HTTPException(status_code=400, detail="Username already taken")
-    db.execute(
-        users.insert().values(
-            username=data.username,
-            password_hash=bcrypt.hash(data.password)
-        )
-    )
-    db.commit()
+def register(data: RegisterIn):
+    with _lock:
+        users = load_users()
+        if any(u['username'] == data.username for u in users):
+            raise HTTPException(status_code=400, detail="Username already taken")
+        users.append({
+            'username': data.username,
+            'password_hash': bcrypt.hash(data.password)
+        })
+        save_users(users)
     return {"msg": "Registered"}
 
 @app.post("/login")
-def login(data: LoginIn, response: Response, db=Depends(get_db)):
-    row = db.execute(users.select().where(users.c.username == data.username)).first()
-    if not row or not bcrypt.verify(data.password, row.password_hash):
+def login(data: LoginIn, response: Response):
+    users = load_users()
+    user = next((u for u in users if u['username'] == data.username), None)
+    if not user or not bcrypt.verify(data.password, user['password_hash']):
         raise HTTPException(status_code=400, detail="Incorrect username or password")
     response.set_cookie(key="username", value=data.username, path="/")
     return {"msg": "Logged in"}
@@ -145,15 +137,15 @@ def logout(response: Response):
     response.delete_cookie(key="username", path="/")
     return {"msg": "Logged out"}
 
+# Monitoring snap downloads
+
 def monitor_snaps(owner: str, interval: int = 60, zip_it: bool = False,
                   only_highlights: bool = False, only_spotlights: bool = False):
     while True:
-        db = SessionLocal()
-        rows = db.execute(subscriptions.select().where(subscriptions.c.owner == owner)).fetchall()
-        db.close()
-        users_list = ",".join(r.snap_user for r in rows)
+        subs = load_subs()
+        users_list = [s['snap_user'] for s in subs if s['owner'] == owner]
         if users_list:
-            cmd = ["snapify", "-u", users_list]
+            cmd = ["snapify", "-u", ",".join(users_list)]
             if zip_it:
                 cmd.append("-z")
             if only_highlights:
@@ -166,25 +158,21 @@ def monitor_snaps(owner: str, interval: int = 60, zip_it: bool = False,
                 print(f"[monitor] error for {owner}: {e}")
         time.sleep(interval)
 
+# Subscription routes
 @app.post("/users/add")
 def add_subscriptions(
     action: SubscriptionAction,
     background_tasks: BackgroundTasks,
-    current_user: str = Depends(get_current_user),
-    db=Depends(get_db)
+    current_user: str = Depends(get_current_user)
 ):
     added = []
-    for su in action.snap_users:
-        exists = db.execute(
-            subscriptions.select()
-            .where(subscriptions.c.owner == current_user)
-            .where(subscriptions.c.snap_user == su)
-        ).first()
-        if not exists:
-            db.execute(subscriptions.insert().values(owner=current_user, snap_user=su))
-            added.append(su)
-    db.commit()
-
+    with _lock:
+        subs = load_subs()
+        for su in action.snap_users:
+            if not any(s['owner']==current_user and s['snap_user']==su for s in subs):
+                subs.append({'owner': current_user, 'snap_user': su})
+                added.append(su)
+        save_subs(subs)
     if added:
         def one_time_download(users_list):
             cmd = ["snapify", "-u", ",".join(users_list)]
@@ -203,49 +191,32 @@ def add_subscriptions(
 @app.post("/users/remove")
 def remove_subscriptions(
     action: SubscriptionAction,
-    current_user: str = Depends(get_current_user),
-    db=Depends(get_db)
+    current_user: str = Depends(get_current_user)
 ):
     removed = []
-    for su in action.snap_users:
-        res = db.execute(
-            subscriptions.delete()
-            .where(subscriptions.c.owner == current_user)
-            .where(subscriptions.c.snap_user == su)
-        )
-        if res.rowcount:
-            removed.append(su)
-    db.commit()
+    with _lock:
+        subs = load_subs()
+        new_subs = []
+        for s in subs:
+            if s['owner']==current_user and s['snap_user'] in action.snap_users:
+                removed.append(s['snap_user'])
+            else:
+                new_subs.append(s)
+        save_subs(new_subs)
     return {"msg": f"Removed {len(removed)} user(s)", "removed": removed}
 
 @app.get("/subscriptions")
-def list_subscriptions(
-    current_user: str = Depends(get_current_user),
-    db=Depends(get_db)
-):
-    rows = db.execute(subscriptions.select().where(subscriptions.c.owner == current_user)).fetchall()
-    subs = [r.snap_user for r in rows]
-    return {"subscriptions": subs}
+def list_subscriptions(current_user: str = Depends(get_current_user)):
+    subs = load_subs()
+    user_subs = [s['snap_user'] for s in subs if s['owner'] == current_user]
+    return {"subscriptions": user_subs}
 
 @app.get("/gallery")
-def get_gallery(
-    current_user: str = Depends(get_current_user),
-    db=Depends(get_db)
-):
-    """
-    Return for each subscribed user:
-      - stories: list of URLs
-      - highlights: list of { album: name, items: [URLs] }
-      - spotlights: list of URLs
-    Directory structure expected:
-      snap_media/<user>/stories/<files>
-      snap_media/<user>/highlights/<album_name>/<files>
-      snap_media/<user>/spotlights/<files>
-    """
+def get_gallery(current_user: str = Depends(get_current_user)):
     out = []
     base = BASE_MEDIA_DIR
-    for row in db.execute(subscriptions.select().where(subscriptions.c.owner == current_user)):
-        u = row.snap_user
+    subs = [s['snap_user'] for s in load_subs() if s['owner']==current_user]
+    for u in subs:
         entry = {"snap_user": u, "stories": [], "highlights": [], "spotlights": []}
         # Stories
         story_dir = os.path.join(base, u, "stories")
@@ -253,16 +224,13 @@ def get_gallery(
             for fn in sorted(os.listdir(story_dir)):
                 if fn.lower().endswith((".jpg", ".png", ".mp4")):
                     entry["stories"].append(f"/snap_media/{u}/stories/{fn}")
-        # Highlights: subfolders
+        # Highlights
         high_root = os.path.join(base, u, "highlights")
         if os.path.isdir(high_root):
             for album in sorted(os.listdir(high_root)):
-                album_path = os.path.join(high_root, album)
-                if os.path.isdir(album_path):
-                    items = []
-                    for fn in sorted(os.listdir(album_path)):
-                        if fn.lower().endswith((".jpg", ".png", ".mp4")):
-                            items.append(f"/snap_media/{u}/highlights/{album}/{fn}")
+                path = os.path.join(high_root, album)
+                if os.path.isdir(path):
+                    items = [f"/snap_media/{u}/highlights/{album}/{fn}" for fn in sorted(os.listdir(path)) if fn.lower().endswith((".jpg",".png",".mp4"))]
                     if items:
                         entry["highlights"].append({"album": album, "items": items})
         # Spotlights
