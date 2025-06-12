@@ -46,9 +46,6 @@
       cursor: pointer;
       border-bottom: 1px solid #222;
       transition: background var(--transition-fast);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
     }
     .nav-item.active, .nav-item:hover {
       background: #222;
@@ -132,9 +129,6 @@
       padding: 0.8rem;
       border-bottom: 1px solid #222;
       cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       transition: background var(--transition-fast);
     }
     .user-item:hover {
@@ -142,7 +136,6 @@
     }
     .user-item span {
       color: var(--snap-yellow);
-      font-size: 1rem;
     }
     /* Gallery view */
     .gallery-view {
@@ -172,7 +165,6 @@
     .tabs {
       display: flex;
       gap: 0.5rem;
-      position: relative;
       border-bottom: 2px solid #333;
       margin-bottom: 0.8rem;
     }
@@ -193,32 +185,31 @@
       content: '';
       position: absolute;
       bottom: -2px;
-      left: 0;
-      right: 0;
+      left: 0; right: 0;
       height: 3px;
       background: var(--snap-yellow);
       border-radius: var(--radius);
       animation: slideIn 0.3s ease-out;
     }
     @keyframes slideIn {
-      from { width: 0; }
-      to { width: 100%; }
+      from { width: 0; } to { width: 100%; }
     }
     .highlight-select {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      background: #2A2A2A;
-      border-radius: var(--radius);
-      padding: 0.5rem;
-      display: none;
+      position: relative;
+      margin-left: auto;
+      display: inline-block;
     }
     .highlight-select select {
+      padding: 0.4rem;
       border-radius: var(--radius);
       background: #333;
       color: var(--snap-white);
       border: none;
-      padding: 0.4rem;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+    .highlight-select select:hover {
+      background: #444;
     }
     .gallery-grid {
       display: grid;
@@ -247,108 +238,71 @@
     .story-info {
       padding: 0.6rem;
       text-align: center;
-      font-size: 0.9rem;
-      color: var(--snap-white);
       background: #1A1A1A;
+      color: var(--snap-white);
     }
     /* Modals */
-    #media-modal,
-    #story-modal {
+    #media-modal, #story-modal {
       position: fixed;
       top: 0; left: 0;
       width: 100vw; height: 100vh;
       background: rgba(0,0,0,0.85);
       display: none;
-      align-items: center;
-      justify-content: center;
+      align-items: center; justify-content: center;
       z-index: 1000;
       animation: fadeIn 0.3s ease-out;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
     .modal-content {
       position: relative;
-      max-width: 90vw;
-      max-height: 90vh;
+      max-width: 90vw; max-height: 90vh;
       background: #1A1A1A;
       border-radius: var(--radius);
       overflow: hidden;
       box-shadow: 0 4px 16px rgba(0,0,0,0.7);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      display: flex; flex-direction: column; align-items: center;
     }
     .modal-content img,
     .modal-content video {
-      max-width: 100%;
-      max-height: 80vh;
+      max-width: 100%; max-height: 80vh;
       object-fit: contain;
       border-radius: var(--radius);
       background: var(--snap-black);
     }
     .modal-buttons {
-      display: flex;
-      gap: 1rem;
-      margin: 1rem 0;
+      display: flex; gap:1rem; margin:1rem 0;
     }
     .modal-buttons a,
     .modal-buttons button {
-      padding: 0.6rem 1.2rem;
-      border: none;
-      border-radius: var(--radius);
-      font-weight: bold;
-      cursor: pointer;
-      transition: transform var(--transition-fast);
+      padding:0.6rem 1.2rem; border:none; border-radius:var(--radius);
+      font-weight:bold; cursor:pointer;
+      transition:transform var(--transition-fast);
     }
-    .modal-buttons a {
-      background: var(--snap-yellow);
-      color: var(--snap-black);
-      text-decoration: none;
+    .modal-buttons a { background:var(--snap-yellow); color:var(--snap-black); text-decoration:none; }
+    .modal-buttons button { background:#F33; color:var(--snap-white); }
+    .modal-buttons a:active, .modal-buttons button:active { transform:scale(0.98); }
+    #close-modal, #close-story {
+      position:absolute; top:12px; right:12px;
+      background:transparent; border:none; color:var(--snap-white);
+      font-size:1.5rem; cursor:pointer;
+      transition:transform var(--transition-fast);
     }
-    .modal-buttons button {
-      background: #F33;
-      color: var(--snap-white);
-    }
-    .modal-buttons a:active,
-    .modal-buttons button:active {
-      transform: scale(0.98);
-    }
-    #close-modal,
-    #close-story {
-      position: absolute;
-      top: 12px; right: 12px;
-      background: transparent;
-      border: none;
-      color: var(--snap-white);
-      font-size: 1.5rem;
-      cursor: pointer;
-      transition: transform var(--transition-fast);
-    }
-    #close-modal:hover,
-    #close-story:hover {
-      transform: scale(1.1);
-    }
-    /* Story modal specifics */
+    #close-modal:hover, #close-story:hover { transform:scale(1.1); }
     #story-modal .progress-bar-container {
-      position: absolute;
-      top: 20px; left: 5%;
-      width: 90%; height: 4px;
-      background: rgba(255,255,255,0.3);
-      border-radius: var(--radius);
+      position:absolute; top:20px; left:5%;
+      width:90%; height:4px;
+      background:rgba(255,255,255,0.3);
+      border-radius:var(--radius);
     }
     #story-modal .progress-bar {
-      width: 0%;
-      height: 100%;
-      background: var(--snap-yellow);
-      border-radius: var(--radius);
-      transition: width 0.1s linear;
+      width:0%; height:100%;
+      background:var(--snap-yellow);
+      border-radius:var(--radius);
+      transition:width 0.1s linear;
     }
     #story-modal .close-story {
-      color: var(--snap-white);
-      background: rgba(0,0,0,0.6);
-      padding: 0.4rem 0.8rem;
+      background:rgba(0,0,0,0.6); color:var(--snap-white);
+      padding:0.4rem 0.8rem; border-radius:var(--radius);
     }
   </style>
 </head>
@@ -383,8 +337,13 @@
     <div id="gallery-view" class="gallery-view" style="display:none;">
       <button id="back-button" class="back-button">← Back to Albums</button>
       <h3 class="gallery-title" id="gallery-title">Media</h3>
+
       <div class="tabs" id="tabs"></div>
-      <div class="highlight-select" id="highlight-select"></div>
+      <!-- Highlights dropdown always present -->
+      <div class="highlight-select" id="highlight-select">
+        <select id="hl-dropdown"></select>
+      </div>
+
       <div class="gallery-grid" id="gallery-grid"></div>
     </div>
   </div>
@@ -392,7 +351,7 @@
   <!-- MEDIA MODAL -->
   <div id="media-modal">
     <div class="modal-content">
-      <button id="close-modal" title="Close">&times;</button>
+      <button id="close-modal">&times;</button>
       <div id="media-container"></div>
       <div class="modal-buttons">
         <a id="download-btn" href="#" download>Download</a>
@@ -403,7 +362,7 @@
 
   <!-- STORY MODAL -->
   <div id="story-modal">
-    <button id="close-story" title="Close">&times;</button>
+    <button id="close-story">&times;</button>
     <div class="progress-bar-container">
       <div class="progress-bar" id="story-progress"></div>
     </div>
@@ -484,53 +443,53 @@
 
       const tabsEl = document.getElementById('tabs');
       tabsEl.innerHTML = '';
-      document.getElementById('highlight-select').style.display = 'none';
+      const hlSelect = document.getElementById('highlight-select');
+      const hlDropdown = document.getElementById('hl-dropdown');
+      hlDropdown.innerHTML = '';
+      hlSelect.style.display = 'none';
 
       // Stories Tab
       const storiesBtn = document.createElement('button');
       storiesBtn.textContent = `Stories (${item.stories.length})`;
       storiesBtn.onclick = ()=>{
-        hideHighlight();
+        hideAll();
         setActiveTab(storiesBtn);
         renderGrid(item.stories);
       };
       tabsEl.append(storiesBtn);
 
-      // Highlights Tab + Dropdown
-      if (item.highlights.length){
-        const hlContainer = document.getElementById('highlight-select');
-        const selectEl = document.createElement('select');
-        hlContainer.innerHTML = '';
-        item.highlights.forEach(h=>{
-          const o = document.createElement('option');
-          o.value = h.album;
-          o.textContent = `${h.album} (${h.items.length})`;
-          selectEl.append(o);
-        });
-        selectEl.onchange = ()=>{
-          const sel = selectEl.value;
-          const album = item.highlights.find(h=>h.album===sel);
-          renderGrid(album.items);
-        };
-        hlContainer.append(selectEl);
+      // Highlights tab + dropdown
+      const highlightsBtn = document.createElement('button');
+      highlightsBtn.textContent = `Highlights (${item.highlights.length})`;
+      highlightsBtn.onclick = ()=>{
+        hideAll();
+        setActiveTab(highlightsBtn);
+        if(item.highlights.length){
+          hlSelect.style.display = 'inline-block';
+          item.highlights.forEach(h=>{
+            const opt = document.createElement('option');
+            opt.value = h.album;
+            opt.textContent = `${h.album} (${h.items.length})`;
+            hlDropdown.append(opt);
+          });
+          // render first album by default
+          const first = item.highlights[0];
+          renderGrid(first.items);
+        }
+      };
+      tabsEl.append(highlightsBtn);
 
-        const highlightsBtn = document.createElement('button');
-        highlightsBtn.textContent = 'Highlights';
-        highlightsBtn.onclick = ()=>{
-          hideHighlight();
-          setActiveTab(highlightsBtn);
-          hlContainer.style.display = 'block';
-          selectEl.value = item.highlights[0].album;
-          renderGrid(item.highlights[0].items);
-        };
-        tabsEl.append(highlightsBtn);
-      }
+      hlDropdown.onchange = ()=>{
+        const sel = hlDropdown.value;
+        const album = item.highlights.find(h=>h.album===sel);
+        renderGrid(album.items);
+      };
 
       // Spotlights Tab
       const spotBtn = document.createElement('button');
       spotBtn.textContent = `Spotlights (${item.spotlights.length})`;
       spotBtn.onclick = ()=>{
-        hideHighlight();
+        hideAll();
         setActiveTab(spotBtn);
         renderGrid(item.spotlights);
       };
@@ -540,20 +499,21 @@
       const allBtn = document.createElement('button');
       allBtn.textContent = 'All';
       allBtn.onclick = ()=>{
-        hideHighlight();
+        hideAll();
         setActiveTab(allBtn);
         openStoryViewer(item);
       };
       tabsEl.append(allBtn);
 
-      function hideHighlight(){
-        document.getElementById('highlight-select').style.display = 'none';
+      function hideAll(){
+        tabsEl.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+        hlSelect.style.display = 'none';
       }
       function setActiveTab(btn){
-        tabsEl.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
         btn.classList.add('active');
       }
 
+      // default to Stories
       storiesBtn.click();
     }
 
@@ -581,6 +541,11 @@
     const downloadBtn = document.getElementById('download-btn');
     const closeModalBtn = document.getElementById('close-modal');
     const closeModalBtn2 = document.getElementById('close-modal-btn');
+    closeModalBtn.onclick = closeModalBtn2.onclick = ()=>{
+      mediaModal.style.display = 'none';
+      mediaContainer.innerHTML = '';
+    };
+    mediaModal.onclick = e=>{ if(e.target===mediaModal) closeModalBtn.click(); };
 
     function openMediaModal(url){
       mediaContainer.innerHTML = '';
@@ -599,14 +564,6 @@
       mediaModal.style.display = 'flex';
     }
 
-    closeModalBtn.onclick = closeModalBtn2.onclick = ()=>{
-      mediaModal.style.display = 'none';
-      mediaContainer.innerHTML = '';
-    };
-    mediaModal.onclick = e=>{
-      if (e.target === mediaModal) closeModalBtn.click();
-    };
-
     const storyModal = document.getElementById('story-modal');
     const storyMediaContainer = document.getElementById('story-media-container');
     const storyProgressBar = document.getElementById('story-progress');
@@ -615,79 +572,74 @@
 
     function openStoryViewer(item){
       storyItems = [];
-      // add stories
       item.stories.forEach(url=>{
         const isVideo = ['.mp4','.webm','.ogg'].some(ext=>url.toLowerCase().endsWith(ext));
         storyItems.push({url, type: isVideo?'video':'image'});
       });
-      // add highlights
       item.highlights.forEach(h=>{
         h.items.forEach(url=>{
           const isVideo = ['.mp4','.webm','.ogg'].some(ext=>url.toLowerCase().endsWith(ext));
           storyItems.push({url, type: isVideo?'video':'image'});
         });
       });
-      // add spotlights
       item.spotlights.forEach(url=>{
         const isVideo = ['.mp4','.webm','.ogg'].some(ext=>url.toLowerCase().endsWith(ext));
         storyItems.push({url, type: isVideo?'video':'image'});
       });
-
-      if (!storyItems.length) { alert("No media"); return; }
-      storyIndex = 0;
-      storyModal.style.display = 'flex';
+      if(!storyItems.length){ alert("No media"); return; }
+      storyIndex=0;
+      storyModal.style.display='flex';
       playCurrentStory();
     }
 
     function playCurrentStory(){
       clearTimeout(storyTimer);
-      storyMediaContainer.innerHTML = '';
-      storyProgressBar.style.width = '0%';
-      const {url,type} = storyItems[storyIndex];
+      storyMediaContainer.innerHTML='';
+      storyProgressBar.style.width='0%';
+      const {url,type}=storyItems[storyIndex];
       let el;
-      if (type==='video'){
-        el = document.createElement('video');
-        el.src = url;
-        el.autoplay = true;
-        el.onloadedmetadata = ()=>startProgress(el.duration*1000);
-        el.onended = nextStory;
+      if(type==='video'){
+        el=document.createElement('video');
+        el.src=url;
+        el.autoplay=true;
+        el.onloadedmetadata=()=>startProgress(el.duration*1000);
+        el.onended=nextStory;
       } else {
-        el = document.createElement('img');
-        el.src = url;
+        el=document.createElement('img');
+        el.src=url;
         startProgress(5000);
       }
       storyMediaContainer.append(el);
     }
 
     function startProgress(duration){
-      storyStartTime = Date.now();
-      storyDuration = duration;
+      storyStartTime=Date.now(); storyDuration=duration;
       (function update(){
-        const pct = Math.min((Date.now()-storyStartTime)/storyDuration*100,100);
-        storyProgressBar.style.width = pct+'%';
-        if (pct<100) requestAnimationFrame(update);
+        const pct=Math.min((Date.now()-storyStartTime)/storyDuration*100,100);
+        storyProgressBar.style.width=pct+'%';
+        if(pct<100) requestAnimationFrame(update);
       })();
-      if (storyItems[storyIndex].type==='image'){
-        storyTimer = setTimeout(nextStory, storyDuration);
+      if(storyItems[storyIndex].type==='image'){
+        storyTimer=setTimeout(nextStory, storyDuration);
       }
     }
 
     function nextStory(){
       clearTimeout(storyTimer);
       storyIndex++;
-      if (storyIndex<storyItems.length) playCurrentStory();
+      if(storyIndex<storyItems.length) playCurrentStory();
       else closeStoryViewer();
     }
 
     function closeStoryViewer(){
       clearTimeout(storyTimer);
-      storyModal.style.display = 'none';
-      storyMediaContainer.innerHTML = '';
-      storyProgressBar.style.width = '0%';
+      storyModal.style.display='none';
+      storyMediaContainer.innerHTML='';
+      storyProgressBar.style.width='0%';
     }
 
-    closeStoryBtn.onclick = closeStoryViewer;
-    document.getElementById('back-button').onclick = showAlbums;
+    closeStoryBtn.onclick=closeStoryViewer;
+    document.getElementById('back-button').onclick=showAlbums;
 
     showPanel();
   </script>
