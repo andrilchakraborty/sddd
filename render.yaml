@@ -1,12 +1,1 @@
-services:
-  - type: web
-    name: snapviewer
-    env: python
-    region: oregon      # adjust as needed
-    plan: free          # or starter, etc.
-    branch: main        # your Git branch
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn snn:app --host 0.0.0.0 --port $PORT"
-    envVars:
-      # On Render, set DATABASE_URL to your Postgres URL. Locally, fallback is SQLite.
-      DATABASE_URL: "postgresql://snapviewer_db_user:nIpot0Of5XNxOE1lCqOOwYU16aJE5r6u@dpg-d154tjp5pdvs73et1cd0-a.oregon-postgres.render.com/snapviewer_db"
+startCommand: web: uvicorn snn:app --host 0.0.0.0 --port $PORT
