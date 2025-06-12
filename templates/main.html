@@ -353,8 +353,6 @@
       <h3>Manage Subscriptions</h3>
       <input id="add-user" placeholder="Add usernames (comma-separated)" />
       <button id="btn-add">Add Users</button>
-      <input id="remove-user" placeholder="Remove usernames (comma-separated)" />
-      <button id="btn-remove">Remove Users</button>
       <div class="status" id="status-msg"></div>
     </div>
 
@@ -368,12 +366,10 @@
     <div id="gallery-view" class="gallery-view" style="display:none;">
       <button id="back-button" class="back-button">← Back to Albums</button>
       <h3 class="gallery-title" id="gallery-title">Media</h3>
-
       <div class="tabs" id="tabs"></div>
       <div class="highlight-select" id="highlight-select">
         <select id="hl-dropdown"></select>
       </div>
-
       <div class="gallery-grid" id="gallery-grid"></div>
     </div>
   </div>
@@ -405,7 +401,6 @@
     document.getElementById('nav-panel').onclick = showPanel;
     document.getElementById('nav-albums').onclick = showAlbums;
     document.getElementById('btn-add').onclick = () => changeSubs('add', document.getElementById('add-user').value);
-    document.getElementById('btn-remove').onclick = () => changeSubs('remove', document.getElementById('remove-user').value);
 
     function showPanel(){
       document.getElementById('panel-view').style.display = '';
