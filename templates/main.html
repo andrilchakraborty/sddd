@@ -50,7 +50,6 @@
       align-items: center;
       gap: 0.5rem;
     }
-    .nav-item svg { width: 20px; height:20px; }
     .nav-item.active, .nav-item:hover {
       background: #222;
     }
@@ -63,7 +62,6 @@
     }
     header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
       background: #1A1A1A;
       padding: 0.8rem 1rem;
@@ -75,35 +73,24 @@
       font-size: 1.2rem;
       color: var(--snap-white);
     }
-    .logout {
-      background: none;
-      border: 1px solid var(--snap-yellow);
-      color: var(--snap-yellow);
-      padding: 0.4rem 0.8rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: background var(--transition-fast), color var(--transition-fast);
-    }
-    .logout:hover {
-      background: var(--snap-yellow);
-      color: var(--snap-black);
-    }
     /* Panel view */
     .panel {
       background: #1A1A1A;
       padding: 1rem;
       border-radius: var(--radius);
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+      width: 100%;
     }
     .panel h3 { color: var(--snap-yellow); margin-bottom: 0.8rem; }
-    .panel input, .panel select {
+    .panel input {
       width: 100%;
-      padding: 0.6rem;
+      padding: 0.8rem;
       margin-bottom: 0.8rem;
       border: none;
       border-radius: var(--radius);
       background: #2A2A2A;
       color: var(--snap-white);
+      font-size: 1rem;
       transition: background var(--transition-fast);
     }
     .panel input:focus {
@@ -111,15 +98,18 @@
       outline: none;
     }
     .panel button {
-      width: 100%;
-      padding: 0.8rem;
+      padding: 0.8rem 1.2rem;
       border: none;
       border-radius: var(--radius);
       background: var(--snap-yellow);
       color: var(--snap-black);
       font-weight: bold;
       cursor: pointer;
-      transition: transform var(--transition-fast);
+      transition: transform var(--transition-fast), background var(--transition-fast);
+      margin-right: 0.5rem;
+    }
+    .panel button:hover {
+      background: #E6E600;
     }
     .panel button:active {
       transform: scale(0.98);
@@ -136,9 +126,10 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
       overflow-y: auto;
       flex: 1;
+      padding: 0.5rem;
     }
     .user-item {
-      padding: 1rem;
+      padding: 0.8rem;
       border-bottom: 1px solid #222;
       cursor: pointer;
       display: flex;
@@ -293,6 +284,7 @@
     .modal-content video {
       max-width: 100%;
       max-height: 80vh;
+      object-fit: contain;
       border-radius: var(--radius);
       background: var(--snap-black);
     }
@@ -363,19 +355,12 @@
 <body>
   <div class="sidebar">
     <h2>Snapify (Global)</h2>
-    <div id="nav-panel" class="nav-item active">
-      <svg viewBox="0 0 24 24"><path fill="currentColor" d="M5 3h14v2H5V3m0 4h10v2H5V7m0 4h14v2H5v-2m0 4h10v2H5v-2z"/></svg>
-      Panel
-    </div>
-    <div id="nav-albums" class="nav-item">
-      <svg viewBox="0 0 24 24"><path fill="currentColor" d="M4 6h16v2H4V6m0 4h16v2H4v-2m0 4h16v2H4v-2z"/></svg>
-      Albums
-    </div>
+    <div id="nav-panel" class="nav-item active">Panel</div>
+    <div id="nav-albums" class="nav-item">Albums</div>
   </div>
   <div class="main">
     <header>
       <h1>Global Gallery — All Users</h1>
-      <button id="refresh-btn" class="logout">Refresh</button>
     </header>
 
     <!-- PANEL VIEW -->
@@ -430,7 +415,6 @@
 
     document.getElementById('nav-panel').onclick = showPanel;
     document.getElementById('nav-albums').onclick = showAlbums;
-    document.getElementById('refresh-btn').onclick = loadSubscriptions;
     document.getElementById('btn-add').onclick = () => changeSubs('add', document.getElementById('add-user').value);
     document.getElementById('btn-remove').onclick = () => changeSubs('remove', document.getElementById('remove-user').value);
 
@@ -502,6 +486,7 @@
       tabsEl.innerHTML = '';
       document.getElementById('highlight-select').style.display = 'none';
 
+      // Stories Tab
       const storiesBtn = document.createElement('button');
       storiesBtn.textContent = `Stories (${item.stories.length})`;
       storiesBtn.onclick = ()=>{
@@ -511,6 +496,7 @@
       };
       tabsEl.append(storiesBtn);
 
+      // Highlights Tab + Dropdown
       if (item.highlights.length){
         const hlContainer = document.getElementById('highlight-select');
         const selectEl = document.createElement('select');
@@ -540,6 +526,7 @@
         tabsEl.append(highlightsBtn);
       }
 
+      // Spotlights Tab
       const spotBtn = document.createElement('button');
       spotBtn.textContent = `Spotlights (${item.spotlights.length})`;
       spotBtn.onclick = ()=>{
@@ -549,6 +536,7 @@
       };
       tabsEl.append(spotBtn);
 
+      // All Tab
       const allBtn = document.createElement('button');
       allBtn.textContent = 'All';
       allBtn.onclick = ()=>{
@@ -559,7 +547,7 @@
       tabsEl.append(allBtn);
 
       function hideHighlight(){
-        document.querySelectorAll('.highlight-select').forEach(el=>el.style.display='none');
+        document.getElementById('highlight-select').style.display = 'none';
       }
       function setActiveTab(btn){
         tabsEl.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
