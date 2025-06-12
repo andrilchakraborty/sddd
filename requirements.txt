@@ -5,3 +5,4 @@ passlib[bcrypt]
 jinja2
 aiofiles
 psycopg2-binary
+httpx
