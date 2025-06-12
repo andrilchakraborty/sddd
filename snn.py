@@ -1,6 +1,7 @@
 import os
 import threading
 import time
+import httpx
 from subprocess import run, CalledProcessError
 from typing import List, Optional
 
@@ -14,6 +15,7 @@ from sqlalchemy import create_engine, Column, String, Integer, Table, MetaData
 from sqlalchemy.orm import sessionmaker
 from passlib.hash import bcrypt
 
+SERVICE_URL = "http://snapify-dkzn.onrender.com"
 # --- Database setup ---
 # Read DATABASE_URL from env; fallback to local SQLite
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./snaps.db")
@@ -93,8 +95,26 @@ class LoginIn(BaseModel):
 
 class SubscriptionAction(BaseModel):
     snap_users: List[str]
-
 # --- Routes ---
+
+@app.on_event("startup")
+async def schedule_ping_task():
+    async def ping_loop():
+        async with httpx.AsyncClient(timeout=5) as client:
+            while True:
+                try:
+                    resp = await client.get(f"{SERVICE_URL}/ping")
+                    if resp.status_code != 200:
+                        print(f"Health ping returned {resp.status_code}")
+                except Exception as e:
+                    print(f"External ping failed: {e!r}")
+                await asyncio.sleep(120)
+    asyncio.create_task(ping_loop())
+
+@app.get("/ping")
+async def ping():
+    return {"status": "alive"}
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     return templates.TemplateResponse("main.html", {"request": request, "api_url": ""})
