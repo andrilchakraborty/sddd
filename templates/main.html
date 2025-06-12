@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SnapViewer</title>
+  <title>SnapViewer (Global)</title>
   <style>
     :root {
       --yellow: #FFFC00;
@@ -68,26 +68,20 @@
       border-radius: 4px;
       cursor: pointer;
     }
-    .panel,
-    #login-view,
-    #register-view {
+    .panel {
       margin-top: 1rem;
       background: #1a1a1a;
       padding: 1rem;
       border-radius: 4px;
     }
-    .panel input,
-    #login-view input,
-    #register-view input {
+    .panel input {
       width: 100%;
       padding: 0.5rem;
       border: none;
       border-radius: 4px;
       margin-bottom: 0.5rem;
     }
-    .panel button,
-    #login-view button,
-    #register-view button {
+    .panel button {
       width: 100%;
       padding: 0.6rem;
       border: none;
@@ -100,11 +94,6 @@
     .status {
       margin-top: 0.5rem;
       color: #080;
-      font-size: 0.9rem;
-    }
-    .error {
-      margin-top: 0.5rem;
-      color: #f66;
       font-size: 0.9rem;
     }
     .albums-list {
@@ -124,10 +113,6 @@
     }
     .albums-list .user-item:hover {
       background: #222;
-    }
-    .albums-list .user-item .status-indicator {
-      font-size: 0.8rem;
-      color: #888;
     }
     .gallery-container {
       margin-top: 1rem;
@@ -192,14 +177,13 @@
       border-radius: 4px;
       cursor: pointer;
     }
-    /* Inline media modal */
     #media-modal {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0,0,0,0.8);
       display: none;
       align-items: center;
       justify-content: center;
@@ -240,14 +224,13 @@
       background: #f33;
       color: #fff;
     }
-    /* Story-like viewer modal */
     #story-modal {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.9);
+      background: rgba(0,0,0,0.9);
       display: none;
       flex-direction: column;
       align-items: center;
@@ -267,7 +250,7 @@
       left: 10%;
       width: 80%;
       height: 5px;
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255,255,255,0.3);
       border-radius: 2px;
     }
     #story-modal .progress-bar {
@@ -289,7 +272,6 @@
       cursor: pointer;
       z-index: 1200;
     }
-    /* Highlights dropdown */
     .highlight-select {
       position: absolute;
       top: 100%;
@@ -311,66 +293,36 @@
 </head>
 <body>
   <div class="sidebar">
-    <h2>Snapify</h2>
+    <h2>Snapify (Global)</h2>
     <div id="nav-panel" class="nav-item active">Panel</div>
     <div id="nav-albums" class="nav-item">Albums</div>
   </div>
-
   <div class="main">
     <header>
-      <div>Welcome, <span id="me"></span></div>
-      <button class="logout" id="logout-btn" style="display:none;">Log Out</button>
+      <div>Global Gallery — all users</div>
+      <button id="refresh-btn" class="logout">Refresh</button>
     </header>
-
-    <div id="auth-views">
-      <div id="login-view" class="panel">
-        <h3>Login</h3>
-        <input id="login-username" placeholder="Username">
-        <input id="login-password" type="password" placeholder="Password">
-        <button id="login-btn">Log In</button>
-        <div class="status" id="login-status"></div>
-        <p style="margin-top:0.5rem; color:var(--yellow); cursor:pointer;" id="show-register">
-          Don't have an account? Register
-        </p>
-      </div>
-      <div id="register-view" class="panel" style="display:none;">
-        <h3>Register</h3>
-        <input id="register-username" placeholder="Username">
-        <input id="register-password" type="password" placeholder="Password">
-        <button id="register-btn">Register</button>
-        <div class="status" id="register-status"></div>
-        <p style="margin-top:0.5rem; color:var(--yellow); cursor:pointer;" id="show-login">
-          Already have an account? Login
-        </p>
-      </div>
+    <div id="panel-view" class="panel">
+      <h3>Add / Remove Users</h3>
+      <input id="add-user" placeholder="Add usernames, comma-sep">
+      <button id="btn-add">Add</button>
+      <input id="remove-user" placeholder="Remove usernames, comma-sep" style="margin-top:0.8rem;">
+      <button id="btn-remove">Remove</button>
+      <div class="status" id="status-msg"></div>
     </div>
-
-    <div id="app-view" style="display:none; flex:1; flex-direction:column;">
-      <div id="panel-view" class="panel">
-        <h3>Add / Remove Users</h3>
-        <input id="add-user" placeholder="Add usernames, comma-sep">
-        <button id="btn-add">Add & Monitor</button>
-        <input id="remove-user" placeholder="Remove usernames, comma-sep" style="margin-top:0.8rem;">
-        <button id="btn-remove">Remove</button>
-        <div class="status" id="status-msg"></div>
-      </div>
-
-      <div id="albums-view" style="display:none; flex:1; flex-direction:column;">
-        <h3>Your Subscribed Users</h3>
-        <div class="albums-list" id="albums-list"></div>
-      </div>
-
-      <div id="gallery-view" style="display:none; flex:1; flex-direction:column;">
-        <button class="back-button" id="back-button">← Back to Albums</button>
-        <h3 id="gallery-title">Media</h3>
-        <div class="gallery-container">
-          <div class="tabs" id="tabs"></div>
-          <div class="gallery-grid" id="gallery-grid"></div>
-        </div>
+    <div id="albums-view" style="display:none; flex:1; flex-direction:column;">
+      <h3>Subscribed Users</h3>
+      <div class="albums-list" id="albums-list"></div>
+    </div>
+    <div id="gallery-view" style="display:none; flex:1; flex-direction:column;">
+      <button class="back-button" id="back-button">← Back to Albums</button>
+      <h3 id="gallery-title">Media</h3>
+      <div class="gallery-container">
+        <div class="tabs" id="tabs"></div>
+        <div class="gallery-grid" id="gallery-grid"></div>
       </div>
     </div>
   </div>
-
   <!-- Inline media modal -->
   <div id="media-modal">
     <div class="modal-content">
@@ -381,8 +333,7 @@
       </div>
     </div>
   </div>
-
-  <!-- Story-like viewer modal -->
+  <!-- Story viewer modal -->
   <div id="story-modal">
     <button class="close-story" id="close-story">Close</button>
     <div class="progress-bar-container">
@@ -390,551 +341,188 @@
     </div>
     <div id="story-media-container"></div>
   </div>
-
   <script>
-    // inject via Jinja: either "" for same-origin or full URL
     const API = "{{ api_url }}";
-    let pollGalleryInterval = null;
-    let currentViewingUser = null;
-
-    // Story viewer state
-    let storyItems = [];
-    let storyIndex = 0;
-    let storyTimer = null;
-    let storyStartTime = null;
-    let storyDuration = 5000;
-    let storyMediaElem = null;
-
-    function switchView(view) {
-      document.getElementById('nav-panel').classList.toggle('active', view==='panel');
-      document.getElementById('nav-albums').classList.toggle('active', view==='albums');
-      document.getElementById('panel-view').style.display = view==='panel' ? '' : 'none';
-      document.getElementById('albums-view').style.display = view==='albums' ? '' : 'none';
+    document.getElementById('nav-panel').onclick = ()=> showPanel();
+    document.getElementById('nav-albums').onclick = ()=> showAlbums();
+    document.getElementById('refresh-btn').onclick = ()=> loadSubscriptions();
+    document.getElementById('btn-add').onclick = ()=> changeSubs('add', document.getElementById('add-user').value);
+    document.getElementById('btn-remove').onclick = ()=> changeSubs('remove', document.getElementById('remove-user').value);
+    function showPanel(){
+      document.getElementById('panel-view').style.display = '';
+      document.getElementById('albums-view').style.display = 'none';
       document.getElementById('gallery-view').style.display = 'none';
-      stopGalleryPolling();
+      document.getElementById('nav-panel').classList.add('active');
+      document.getElementById('nav-albums').classList.remove('active');
     }
-
-    function logoutClient(){
-      document.getElementById('app-view').style.display = 'none';
-      document.getElementById('auth-views').style.display = '';
-      document.getElementById('logout-btn').style.display = 'none';
-      document.getElementById('me').textContent = '';
-      stopGalleryPolling();
+    function showAlbums(){
+      document.getElementById('panel-view').style.display = 'none';
+      document.getElementById('albums-view').style.display = '';
+      document.getElementById('gallery-view').style.display = 'none';
+      document.getElementById('nav-panel').classList.remove('active');
+      document.getElementById('nav-albums').classList.add('active');
+      loadSubscriptions();
     }
-
-    async function doLogin(username, password) {
-      const res = await fetch(`${API}/login`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(()=>null);
-        throw new Error(err?.detail || 'Login failed');
-      }
-    }
-    async function doRegister(username, password) {
-      const res = await fetch(`${API}/register`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(()=>null);
-        throw new Error(err?.detail || 'Register failed');
-      }
-    }
-    async function doLogout() {
-      await fetch(`${API}/logout`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-      logoutClient();
-    }
-
-    document.addEventListener('DOMContentLoaded', ()=>{
-      fetch(`${API}/subscriptions`, { method:'GET', credentials:'include' })
-        .then(res=>{
-          if (res.ok) {
-            document.getElementById('auth-views').style.display = 'none';
-            document.getElementById('app-view').style.display = '';
-            document.getElementById('logout-btn').style.display = '';
-            const m = document.cookie.match(/username=([^;]+)/);
-            if (m) document.getElementById('me').textContent = decodeURIComponent(m[1]);
-            switchView('panel');
-            loadSubscriptions();
-            startMonitor();
-          } else {
-            document.getElementById('auth-views').style.display = '';
-            document.getElementById('app-view').style.display = 'none';
-            document.getElementById('logout-btn').style.display = 'none';
-          }
-        })
-        .catch(()=>{
-          document.getElementById('auth-views').style.display = '';
-          document.getElementById('app-view').style.display = 'none';
-          document.getElementById('logout-btn').style.display = 'none';
-        });
-    });
-
-    document.getElementById('login-btn').onclick = async ()=>{
-      const user = document.getElementById('login-username').value;
-      const pw   = document.getElementById('login-password').value;
-      const statusEl = document.getElementById('login-status');
-      statusEl.textContent = '';
-      try {
-        await doLogin(user, pw);
-        document.getElementById('auth-views').style.display = 'none';
-        document.getElementById('app-view').style.display = '';
-        document.getElementById('logout-btn').style.display = '';
-        document.getElementById('me').textContent = user;
-        switchView('panel');
-        loadSubscriptions();
-        startMonitor();
-      } catch(e) {
-        statusEl.textContent = e.message;
-      }
-    };
-    document.getElementById('register-btn').onclick = async ()=>{
-      const user = document.getElementById('register-username').value;
-      const pw   = document.getElementById('register-password').value;
-      const statusEl = document.getElementById('register-status');
-      statusEl.textContent = '';
-      try {
-        await doRegister(user, pw);
-        statusEl.textContent = 'Registered! You can now log in.';
-      } catch(e) {
-        statusEl.textContent = e.message;
-      }
-    };
-    document.getElementById('show-register').onclick = ()=>{
-      document.getElementById('login-view').style.display = 'none';
-      document.getElementById('register-view').style.display = '';
-    };
-    document.getElementById('show-login').onclick = ()=>{
-      document.getElementById('register-view').style.display = 'none';
-      document.getElementById('login-view').style.display = '';
-    };
-    document.getElementById('logout-btn').onclick = async ()=>{
-      await doLogout();
-    };
-
-    document.getElementById('btn-add').onclick = ()=>{
-      changeSubs('add', document.getElementById('add-user').value);
-    };
-    document.getElementById('btn-remove').onclick = ()=>{
-      changeSubs('remove', document.getElementById('remove-user').value);
-    };
-    document.getElementById('nav-panel').onclick = ()=> switchView('panel');
-    document.getElementById('nav-albums').onclick = ()=> switchView('albums');
-
-    async function startMonitor(){
-      await fetch(`${API}/monitor/start`, {
-        method:'POST',
-        credentials: 'include'
-      });
-    }
-
-    async function loadSubscriptions(){
-      const res = await fetch(`${API}/subscriptions`, {
-        method: 'GET',
-        credentials: 'include'
-      });
-      if (res.status === 401) { logoutClient(); return; }
-      const data = await res.json();
-      renderSubscriptions(data.subscriptions);
-      startGalleryPolling();
-    }
-
-    function renderSubscriptions(subsList){
-      const list = document.getElementById('albums-list');
-      list.innerHTML = '';
-      subsList.forEach(username=>{
-        const div = document.createElement('div');
-        div.className = 'user-item';
-        div.textContent = username;
-        const statusSpan = document.createElement('span');
-        statusSpan.className = 'status-indicator';
-        statusSpan.textContent = '';
-        div.append(statusSpan);
-        div.onclick = ()=> openUserGallery(username);
-        list.append(div);
-      });
-    }
-
     async function changeSubs(path, txt){
       const users = txt.split(',').map(u=>u.trim()).filter(u=>u);
       if (!users.length) return;
       const res = await fetch(`${API}/users/${path}`, {
         method:'POST',
-        credentials: 'include',
         headers:{ 'Content-Type':'application/json' },
         body: JSON.stringify({ snap_users: users })
       });
-      if (res.status === 401) { logoutClient(); return; }
       const data = await res.json();
-      if (path === 'add' && data.added && data.added.length) {
-        document.getElementById('status-msg').textContent = 'Added: ' + data.added.join(', ');
-      } else if (path === 'remove') {
-        document.getElementById('status-msg').textContent = 'Removed: ' + (data.removed||[]).join(', ');
-      }
+      document.getElementById('status-msg').textContent = data.msg;
       loadSubscriptions();
     }
-
-    function startGalleryPolling(){
-      if (pollGalleryInterval) return;
-      pollGalleryInterval = setInterval(async ()=>{
-        const res = await fetch(`${API}/gallery`, {
-          method: 'GET',
-          credentials: 'include'
-        });
-        if (res.status === 401) { logoutClient(); return; }
-        const { gallery } = await res.json();
-        updateAlbumsStatus(gallery);
-        if (currentViewingUser) {
-          const entry = gallery.find(e => e.snap_user === currentViewingUser);
-          if (entry) updateUserGallery(entry);
-        }
-      }, 5000);
+    async function loadSubscriptions(){
+      const res = await fetch(`${API}/subscriptions`);
+      const { subscriptions } = await res.json();
+      renderSubscriptions(subscriptions);
     }
-    function stopGalleryPolling(){
-      if (pollGalleryInterval) {
-        clearInterval(pollGalleryInterval);
-        pollGalleryInterval = null;
-      }
-    }
-
-    function updateAlbumsStatus(galleryData){
-      document.querySelectorAll('#albums-list .user-item').forEach(div=>{
-        const username = div.firstChild.textContent;
-        const span = div.querySelector('.status-indicator');
-        const entry = galleryData.find(e => e.snap_user === username);
-        if (entry) {
-          const hasMedia = (entry.stories && entry.stories.length)
-                        || (entry.highlights && entry.highlights.some(h=>h.items.length))
-                        || (entry.spotlights && entry.spotlights.length);
-          span.textContent = hasMedia ? ' •' : '';
-        } else {
-          span.textContent = '';
-        }
+    function renderSubscriptions(list){
+      const c = document.getElementById('albums-list');
+      c.innerHTML = '';
+      list.forEach(u=>{
+        const d = document.createElement('div');
+        d.className = 'user-item';
+        d.textContent = u;
+        d.onclick = ()=> openUserGallery(u);
+        c.append(d);
       });
     }
-
-    function openUserGallery(username){
-      currentViewingUser = username;
-      fetch(`${API}/gallery`, { method:'GET', credentials:'include' })
-        .then(res=>{
-          if (res.status === 401) { logoutClient(); return null; }
-          return res.json();
-        })
-        .then(data=>{
-          if (!data) return;
-          const entry = data.gallery.find(e => e.snap_user === username);
-          if (entry) showGallery(entry);
-          else showGallery({ snap_user: username, stories: [], highlights: [], spotlights: [] });
-        });
+    async function openUserGallery(u){
+      const res = await fetch(`${API}/gallery`);
+      const { gallery } = await res.json();
+      const entry = gallery.find(e=>e.snap_user===u) || {snap_user:u,stories:[],highlights:[],spotlights:[]};
+      showGallery(entry);
     }
-
     function showGallery(item){
-      stopGalleryPolling();
+      document.getElementById('albums-view').style.display = 'none';
+      document.getElementById('gallery-view').style.display = '';
       document.getElementById('gallery-title').textContent = item.snap_user + "’s Media";
       const tabsEl = document.getElementById('tabs');
       tabsEl.innerHTML = '';
-
-      // STORIES tab
-      const storiesBtn = document.createElement('button');
-      storiesBtn.textContent = `Stories (${(item.stories||[]).length})`;
-      storiesBtn.dataset.section = 'stories';
-      storiesBtn.onclick = ()=>{
-        hideHighlightSelect();
-        document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
-        storiesBtn.classList.add('active');
-        renderGrid(item.snap_user, 'stories', item.stories || []);
+      // STORIES
+      const sBtn = document.createElement('button');
+      sBtn.textContent = `Stories(${item.stories.length})`;
+      sBtn.dataset.section='stories';
+      sBtn.onclick = ()=>{
+        hideHighlight(); setActive(sBtn);
+        renderGrid(item.stories);
       };
-      tabsEl.append(storiesBtn);
-
-      // HIGHLIGHTS tab & dropdown
-      let selectEl = null;
-      if (item.highlights && item.highlights.length) {
-        const highlightsBtn = document.createElement('button');
-        highlightsBtn.textContent = 'Highlights';
-        highlightsBtn.dataset.section = 'highlights';
-        highlightsBtn.onclick = ()=>{
-          document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
-          highlightsBtn.classList.add('active');
-          showHighlightSelect();
-          const first = item.highlights[0];
-          renderGrid(item.snap_user, 'highlights', first.items);
-          selectEl.value = first.album;
+      tabsEl.append(sBtn);
+      // HIGHLIGHTS
+      let sel=null, container=null;
+      if(item.highlights.length){
+        const hBtn = document.createElement('button');
+        hBtn.textContent='Highlights';
+        hBtn.onclick=()=>{
+          hideHighlight(); setActive(hBtn);
+          container.style.display='block';
+          const first=item.highlights[0];
+          sel.value=first.album;
+          renderGrid(first.items);
         };
-        tabsEl.append(highlightsBtn);
-
-        const hlContainer = document.createElement('div');
-        hlContainer.className = 'highlight-select';
-        selectEl = document.createElement('select');
+        tabsEl.append(hBtn);
+        container=document.createElement('div');
+        container.className='highlight-select';
+        sel=document.createElement('select');
         item.highlights.forEach(h=>{
-          const opt = document.createElement('option');
-          opt.value = h.album;
-          opt.textContent = `${h.album} (${h.items.length})`;
-          selectEl.append(opt);
+          const o=document.createElement('option');
+          o.value=h.album; o.textContent=`${h.album}(${h.items.length})`;
+          sel.append(o);
         });
-        selectEl.onchange = ()=>{
-          const sel = selectEl.value;
-          const albumObj = item.highlights.find(h=>h.album===sel);
-          if (albumObj) {
-            renderGrid(item.snap_user, 'highlights', albumObj.items);
-          }
+        sel.onchange=()=>{
+          const al=item.highlights.find(h=>h.album===sel.value);
+          renderGrid(al.items);
         };
-        hlContainer.append(selectEl);
-        tabsEl.append(hlContainer);
-
-        function hideHighlightSelect() {
-          document.querySelectorAll('.highlight-select').forEach(el=>el.style.display='none');
-        }
-        function showHighlightSelect() {
-          document.querySelectorAll('.highlight-select').forEach(el=>el.style.display='none');
-          hlContainer.style.display = 'block';
-        }
+        container.append(sel);
+        tabsEl.append(container);
       }
-
-      // SPOTLIGHTS tab
-      const spotBtn = document.createElement('button');
-      spotBtn.textContent = `Spotlights (${(item.spotlights||[]).length})`;
-      spotBtn.dataset.section = 'spotlights';
-      spotBtn.onclick = ()=>{
-        hideHighlightSelect();
-        document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
-        spotBtn.classList.add('active');
-        renderGrid(item.snap_user, 'spotlights', item.spotlights || []);
+      // SPOTLIGHTS
+      const spBtn=document.createElement('button');
+      spBtn.textContent=`Spotlights(${item.spotlights.length})`;
+      spBtn.onclick=()=>{
+        hideHighlight(); setActive(spBtn);
+        renderGrid(item.spotlights);
       };
-      tabsEl.append(spotBtn);
-
-      // ALL tab
-      const allBtn = document.createElement('button');
-      allBtn.textContent = 'All';
-      allBtn.dataset.section = 'all';
-      allBtn.onclick = ()=>{
-        hideHighlightSelect();
-        document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
-        allBtn.classList.add('active');
+      tabsEl.append(spBtn);
+      // ALL
+      const allBtn=document.createElement('button');
+      allBtn.textContent='All';
+      allBtn.onclick=()=>{
+        hideHighlight(); setActive(allBtn);
         openStoryViewer(item);
       };
       tabsEl.append(allBtn);
-
-      if (selectEl) {
-        document.querySelectorAll('.highlight-select').forEach(el=>el.style.display='none');
-      }
-
-      storiesBtn.click();
-
-      document.getElementById('panel-view').style.display = 'none';
-      document.getElementById('albums-view').style.display = 'none';
-      document.getElementById('gallery-view').style.display = '';
-      document.getElementById('nav-panel').classList.remove('active');
-      document.getElementById('nav-albums').classList.remove('active');
-
-      startGalleryPolling();
+      function hideHighlight(){ document.querySelectorAll('.highlight-select').forEach(el=>el.style.display='none'); }
+      function setActive(btn){ document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); }
+      sBtn.click();
     }
-
-    function updateUserGallery(entry){
-      document.querySelectorAll('#tabs button').forEach(btn=>{
-        const sec = btn.dataset.section;
-        if (sec==='stories') {
-          btn.textContent = `Stories (${(entry.stories||[]).length})`;
-        } else if (sec==='spotlights') {
-          btn.textContent = `Spotlights (${(entry.spotlights||[]).length})`;
-        } else if (sec==='highlights') {
-          btn.textContent = `Highlights`;
-          const selectEl = document.querySelector('.highlight-select select');
-          if (selectEl) {
-            selectEl.innerHTML = '';
-            entry.highlights.forEach(h=>{
-              const opt = document.createElement('option');
-              opt.value = h.album;
-              opt.textContent = `${h.album} (${h.items.length})`;
-              selectEl.append(opt);
-            });
-          }
-        }
-      });
-      const activeBtn = document.querySelector('#tabs button.active');
-      if (activeBtn && activeBtn.dataset.section==='all') {
-        openStoryViewer(entry, true);
-      }
-    }
-
-    function renderGrid(username, sectionKey, urls) {
-      const grid = document.getElementById('gallery-grid');
-      grid.innerHTML = '';
-      urls.forEach(url=>{
-        const card = document.createElement('div');
-        card.className = 'story-card';
-        const thumb = document.createElement('div');
-        thumb.className = 'story-thumb';
-        thumb.style.backgroundImage = `url('${url}')`;
-        thumb.onclick = ()=> openMediaModal(url);
-        const info = document.createElement('div');
-        info.className = 'story-info';
-        info.textContent = 'View';
-        info.onclick = ()=> openMediaModal(url);
-        card.append(thumb, info);
-        grid.append(card);
+    function renderGrid(urls){
+      const g=document.getElementById('gallery-grid');
+      g.innerHTML='';
+      urls.forEach(u=>{
+        const c=document.createElement('div');c.className='story-card';
+        const t=document.createElement('div');t.className='story-thumb';t.style.backgroundImage=`url('${u}')`;
+        t.onclick=()=>openMediaModal(u);
+        const i=document.createElement('div');i.className='story-info';i.textContent='View';i.onclick=()=>openMediaModal(u);
+        c.append(t,i);g.append(c);
       });
     }
-
-    const mediaModal = document.getElementById('media-modal');
-    const mediaContainer = document.getElementById('media-container');
-    const downloadBtn = document.getElementById('download-btn');
-    const closeModalBtn = document.getElementById('close-modal');
-
-    function openMediaModal(url) {
-      mediaContainer.innerHTML = '';
-      const lower = url.toLowerCase();
-      let mediaElem;
-      if (lower.endsWith('.mp4') || lower.endsWith('.webm') || lower.endsWith('.ogg')) {
-        mediaElem = document.createElement('video');
-        mediaElem.src = url;
-        mediaElem.controls = true;
-        mediaElem.autoplay = true;
-      } else {
-        mediaElem = document.createElement('img');
-        mediaElem.src = url;
-      }
-      mediaContainer.append(mediaElem);
-      downloadBtn.href = url;
-      downloadBtn.download = "";
-      mediaModal.style.display = 'flex';
+    const mediaModal=document.getElementById('media-modal'), mediaContainer=document.getElementById('media-container'),
+          downloadBtn=document.getElementById('download-btn'), closeModalBtn=document.getElementById('close-modal');
+    function openMediaModal(u){
+      mediaContainer.innerHTML=''; let el;
+      if(u.endsWith('.mp4')){ el=document.createElement('video'); el.src=u; el.controls=true; el.autoplay=true; }
+      else{ el=document.createElement('img'); el.src=u; }
+      mediaContainer.append(el); downloadBtn.href=u; mediaModal.style.display='flex';
     }
-
-    closeModalBtn.onclick = ()=>{
-      mediaModal.style.display = 'none';
-      const vid = mediaContainer.querySelector('video');
-      if (vid) {
-        vid.pause();
-        vid.src = "";
-      }
-      mediaContainer.innerHTML = '';
-    };
-    mediaModal.onclick = (e)=>{
-      if (e.target === mediaModal) {
-        closeModalBtn.click();
-      }
-    };
-
-    const storyModal = document.getElementById('story-modal');
-    const storyMediaContainer = document.getElementById('story-media-container');
-    const storyProgressBar = document.getElementById('story-progress');
-    const closeStoryBtn = document.getElementById('close-story');
-
-    function openStoryViewer(item, isUpdate=false) {
-      const arr = [];
-      (item.stories||[]).forEach(url=> arr.push({url, type: inferType(url)}));
-      (item.highlights||[]).forEach(h=> h.items.forEach(url=> arr.push({url, type: inferType(url)})));
-      (item.spotlights||[]).forEach(url=> arr.push({url, type: inferType(url)}));
-      storyItems = arr;
-      if (!storyItems.length) {
-        alert("No media to play");
-        return;
-      }
-      if (!isUpdate) {
-        storyIndex = 0;
-        showStoryModal();
-      } else {
-        if (storyIndex >= storyItems.length) storyIndex = 0;
-        playCurrentStory();
-      }
+    closeModalBtn.onclick=()=>{ mediaModal.style.display='none'; mediaContainer.innerHTML=''; };
+    mediaModal.onclick=e=>{ if(e.target===mediaModal) closeModalBtn.click(); };
+    const storyModal=document.getElementById('story-modal'), storyMediaContainer=document.getElementById('story-media-container'),
+          storyProgressBar=document.getElementById('story-progress'), closeStoryBtn=document.getElementById('close-story');
+    let storyItems=[], storyIndex=0, storyTimer, storyStartTime, storyDuration=5000;
+    function openStoryViewer(item){
+      storyItems=[];
+      item.stories.forEach(u=>storyItems.push({url:u,type:'image'}));
+      item.highlights.forEach(h=>h.items.forEach(u=>storyItems.push({url:u,type:'image'})));
+      item.spotlights.forEach(u=>storyItems.push({url:u,type:'video'}));
+      if(!storyItems.length) return alert('No media');
+      storyIndex=0; showStoryModal();
     }
-
-    function inferType(url) {
-      const l = url.toLowerCase();
-      if (l.endsWith('.mp4') || l.endsWith('.webm') || l.endsWith('.ogg')) return 'video';
-      return 'image';
+    function showStoryModal(){
+      storyModal.style.display='flex'; playCurrent();
     }
-
-    function showStoryModal() {
-      storyModal.style.display = 'flex';
-      storyIndex = 0;
-      playCurrentStory();
+    function playCurrent(){
+      clearTimeout(storyTimer); storyMediaContainer.innerHTML=''; storyProgressBar.style.width='0%';
+      const {url,type}=storyItems[storyIndex]; let el;
+      if(type==='video'){ el=document.createElement('video'); el.src=url; el.autoplay=true; el.onloadedmetadata=()=>startProg(el.duration*1000); el.onended=nextStory; }
+      else{ el=document.createElement('img'); el.src=url; startProg(5000); }
+      storyMediaContainer.append(el);
     }
-
-    function playCurrentStory() {
-      clearTimeout(storyTimer);
-      storyMediaContainer.innerHTML = '';
-      storyProgressBar.style.width = '0%';
-      const {url, type} = storyItems[storyIndex];
-      let elem;
-      if (type==='video') {
-        elem = document.createElement('video');
-        elem.src = url;
-        elem.controls = false;
-        elem.autoplay = true;
-        elem.muted = false;
-        elem.onloadedmetadata = ()=>{
-          const dur = elem.duration * 1000;
-          startProgress(dur);
-        };
-        elem.onended = ()=> nextStory();
-      } else {
-        elem = document.createElement('img');
-        elem.src = url;
-        startProgress(5000);
-      }
-      storyMediaContainer.append(elem);
-      storyMediaElem = elem;
-      if (type==='image') {
-        storyTimer = setTimeout(()=> nextStory(), 5000);
-      }
+    function startProg(dur){
+      storyStartTime=Date.now(); storyDuration=dur;
+      (function upd(){
+        const pct=Math.min((Date.now()-storyStartTime)/storyDuration*100,100);
+        storyProgressBar.style.width=pct+'%';
+        if(pct<100) requestAnimationFrame(upd);
+      })();
+      if(storyItems[storyIndex].type==='image') storyTimer=setTimeout(nextStory,storyDuration);
     }
-
-    function startProgress(duration) {
-      storyStartTime = Date.now();
-      storyDuration = duration;
-      function update() {
-        const elapsed = Date.now() - storyStartTime;
-        const pct = Math.min((elapsed / storyDuration) * 100, 100);
-        storyProgressBar.style.width = pct + '%';
-        if (pct < 100) requestAnimationFrame(update);
-      }
-      requestAnimationFrame(update);
+    function nextStory(){
+      clearTimeout(storyTimer); storyIndex++;
+      if(storyIndex<storyItems.length) playCurrent();
+      else closeStoryViewer();
     }
-
-    function nextStory() {
-      clearTimeout(storyTimer);
-      storyIndex++;
-      if (storyIndex < storyItems.length) {
-        playCurrentStory();
-      } else {
-        closeStoryViewer();
-      }
+    function closeStoryViewer(){
+      clearTimeout(storyTimer); storyModal.style.display='none'; storyMediaContainer.innerHTML='';
     }
-
-    function closeStoryViewer() {
-      clearTimeout(storyTimer);
-      const vid = storyMediaContainer.querySelector('video');
-      if (vid) {
-        vid.pause();
-        vid.src = "";
-      }
-      storyMediaContainer.innerHTML = '';
-      storyProgressBar.style.width = '0%';
-      storyModal.style.display = 'none';
-    }
-
-    closeStoryBtn.onclick = closeStoryViewer;
-    storyModal.onclick = (e)=>{
-      if (e.target === storyModal) {
-        closeStoryViewer();
-      }
-    };
-
-    document.getElementById('back-button').onclick = ()=>{
-      currentViewingUser = null;
-      stopGalleryPolling();
-      switchView('albums');
-      loadSubscriptions();
-    };
+    closeStoryBtn.onclick=closeStoryViewer;
+    document.getElementById('back-button').onclick=()=>showAlbums();
+    // start on Panel
+    showPanel();
   </script>
 </body>
 </html>
