@@ -1,131 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SnapViewer</title>
   <style>
     :root {
-      --yellow: #FFFC00; --black: #111; --white: #FFF; --font: 'Segoe UI', sans-serif;
+      --yellow: #FFFC00;
+      --black: #111;
+      --white: #FFF;
+      --font: 'Segoe UI', sans-serif;
     }
-    * { margin:0; padding:0; box-sizing:border-box }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body {
       font-family: var(--font);
       background: var(--yellow);
       color: var(--black);
-      height:100vh;
-      display:grid;
-      grid-template-columns:200px 1fr;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 200px 1fr;
     }
     .sidebar {
       background: var(--black);
       color: var(--yellow);
-      display:flex;
-      flex-direction:column;
+      display: flex;
+      flex-direction: column;
     }
     .sidebar h2 {
-      padding:1rem;
-      border-bottom:1px solid #333;
-      font-size:1.2rem;
+      padding: 1rem;
+      border-bottom: 1px solid #333;
+      font-size: 1.2rem;
     }
     .nav-item {
-      padding:0.8rem 1rem;
-      cursor:pointer;
-      border-bottom:1px solid #333;
+      padding: 0.8rem 1rem;
+      cursor: pointer;
+      border-bottom: 1px solid #333;
     }
-    .nav-item.active, .nav-item:hover {
+    .nav-item.active,
+    .nav-item:hover {
       background: #222;
     }
     .main {
-      padding:1rem;
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-      height:100%;
+      padding: 1rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
     header {
-      display:flex; justify-content:space-between; align-items:center;
-      background:#1a1a1a; color:var(--yellow);
-      padding:0.5rem 1rem; border-radius:4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1a1a1a;
+      color: var(--yellow);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
     }
     .logout {
-      background:none;border:1px solid var(--yellow);
-      color:var(--yellow);padding:0.3rem 0.8rem;border-radius:4px;
-      cursor:pointer;
+      background: none;
+      border: 1px solid var(--yellow);
+      color: var(--yellow);
+      padding: 0.3rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
     }
-    .panel, #login-view, #register-view {
-      margin-top:1rem;
-      background:#1a1a1a;
-      padding:1rem;
-      border-radius:4px;
+    .panel,
+    #login-view,
+    #register-view {
+      margin-top: 1rem;
+      background: #1a1a1a;
+      padding: 1rem;
+      border-radius: 4px;
     }
-    .panel input, #login-view input, #register-view input { 
-      width:100%; padding:0.5rem; border:none; border-radius:4px; margin-bottom:0.5rem;
+    .panel input,
+    #login-view input,
+    #register-view input {
+      width: 100%;
+      padding: 0.5rem;
+      border: none;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
     }
-    .panel button, #login-view button, #register-view button {
-      width:100%; padding:0.6rem; border:none; border-radius:4px;
-      background:var(--yellow); color:var(--black); font-weight:bold; cursor:pointer;
+    .panel button,
+    #login-view button,
+    #register-view button {
+      width: 100%;
+      padding: 0.6rem;
+      border: none;
+      border-radius: 4px;
+      background: var(--yellow);
+      color: var(--black);
+      font-weight: bold;
+      cursor: pointer;
     }
     .status {
-      margin-top:0.5rem; color:#080; font-size:0.9rem;
+      margin-top: 0.5rem;
+      color: #080;
+      font-size: 0.9rem;
     }
     .error {
-      margin-top:0.5rem; color:#f66; font-size:0.9rem;
+      margin-top: 0.5rem;
+      color: #f66;
+      font-size: 0.9rem;
     }
     .albums-list {
-      margin-top:1rem;
-      background:#1a1a1a; border-radius:4px; overflow:auto;
-      flex:1;
+      margin-top: 1rem;
+      background: #1a1a1a;
+      border-radius: 4px;
+      overflow: auto;
+      flex: 1;
     }
     .albums-list .user-item {
-      padding:0.7rem 1rem; border-bottom:1px solid #333;
-      cursor:pointer; color:var(--yellow); display:flex; justify-content:space-between;
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid #333;
+      cursor: pointer;
+      color: var(--yellow);
+      display: flex;
+      justify-content: space-between;
     }
-    .albums-list .user-item:hover { background:#222; }
+    .albums-list .user-item:hover {
+      background: #222;
+    }
     .albums-list .user-item .status-indicator {
-      font-size:0.8rem; color:#888;
+      font-size: 0.8rem;
+      color: #888;
     }
     .gallery-container {
-      margin-top:1rem; display:flex; flex-direction:column; flex:1; overflow:auto;
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: auto;
     }
     .tabs {
-      display:flex; gap:0.5rem; flex-wrap: wrap;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
       position: relative;
     }
     .tabs button {
-      background:#333; color:var(--yellow); border:none; padding:0.5rem 1rem; border-radius:4px; cursor:pointer;
+      background: #333;
+      color: var(--yellow);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
     }
     .tabs button.active {
-      background:var(--yellow); color:var(--black);
+      background: var(--yellow);
+      color: var(--black);
     }
     .gallery-grid {
-      margin-top:1rem;
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
-      gap:0.8rem;
-      overflow:auto;
-      flex:1;
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.8rem;
+      overflow: auto;
+      flex: 1;
     }
     .story-card {
-      background:#fff;
-      border-radius:4px; overflow:hidden; cursor:pointer;
-      display:flex; flex-direction:column;
+      background: #fff;
+      border-radius: 4px;
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
     }
     .story-thumb {
-      width:100%; padding-top:100%; background-size:cover; background-position:center;
+      width: 100%;
+      padding-top: 100%;
+      background-size: cover;
+      background-position: center;
     }
     .story-info {
-      padding:0.4rem; background:#1a1a1a; color:var(--yellow);
-      text-align:center; font-size:0.85rem;
+      padding: 0.4rem;
+      background: #1a1a1a;
+      color: var(--yellow);
+      text-align: center;
+      font-size: 0.85rem;
     }
     .back-button {
-      margin-top:0.5rem; background:#333; color:var(--yellow); border:none; padding:0.4rem 0.8rem; border-radius:4px; cursor:pointer;
+      margin-top: 0.5rem;
+      background: #333;
+      color: var(--yellow);
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
     }
     /* Inline media modal */
     #media-modal {
       position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.8);
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
       display: none;
       align-items: center;
       justify-content: center;
@@ -139,7 +213,8 @@
       flex-direction: column;
       align-items: center;
     }
-    #media-modal img, #media-modal video {
+    #media-modal img,
+    #media-modal video {
       max-width: 100%;
       max-height: 80vh;
       border-radius: 4px;
@@ -168,16 +243,19 @@
     /* Story-like viewer modal */
     #story-modal {
       position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.9);
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.9);
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 1100;
     }
-    #story-modal video, #story-modal img {
+    #story-modal video,
+    #story-modal img {
       max-width: 90vw;
       max-height: 80vh;
       border-radius: 4px;
@@ -189,7 +267,7 @@
       left: 10%;
       width: 80%;
       height: 5px;
-      background: rgba(255,255,255,0.3);
+      background: rgba(255, 255, 255, 0.3);
       border-radius: 2px;
     }
     #story-modal .progress-bar {
@@ -251,7 +329,9 @@
         <input id="login-password" type="password" placeholder="Password">
         <button id="login-btn">Log In</button>
         <div class="status" id="login-status"></div>
-        <p style="margin-top:0.5rem; color:var(--yellow); cursor:pointer;" id="show-register">Don't have an account? Register</p>
+        <p style="margin-top:0.5rem; color:var(--yellow); cursor:pointer;" id="show-register">
+          Don't have an account? Register
+        </p>
       </div>
       <div id="register-view" class="panel" style="display:none;">
         <h3>Register</h3>
@@ -259,7 +339,9 @@
         <input id="register-password" type="password" placeholder="Password">
         <button id="register-btn">Register</button>
         <div class="status" id="register-status"></div>
-        <p style="margin-top:0.5rem; color:var(--yellow); cursor:pointer;" id="show-login">Already have an account? Login</p>
+        <p style="margin-top:0.5rem; color:var(--yellow); cursor:pointer;" id="show-login">
+          Already have an account? Login
+        </p>
       </div>
     </div>
 
@@ -310,7 +392,8 @@
   </div>
 
   <script>
-    const API = "";
+    // inject via Jinja: either "" for same-origin or full URL
+    const API = "{{ api_url }}";
     let pollGalleryInterval = null;
     let currentViewingUser = null;
 
@@ -398,7 +481,7 @@
 
     document.getElementById('login-btn').onclick = async ()=>{
       const user = document.getElementById('login-username').value;
-      const pw = document.getElementById('login-password').value;
+      const pw   = document.getElementById('login-password').value;
       const statusEl = document.getElementById('login-status');
       statusEl.textContent = '';
       try {
@@ -416,7 +499,7 @@
     };
     document.getElementById('register-btn').onclick = async ()=>{
       const user = document.getElementById('register-username').value;
-      const pw = document.getElementById('register-password').value;
+      const pw   = document.getElementById('register-password').value;
       const statusEl = document.getElementById('register-status');
       statusEl.textContent = '';
       try {
@@ -438,10 +521,10 @@
       await doLogout();
     };
 
-    document.getElementById('btn-add').onclick = ()=> {
+    document.getElementById('btn-add').onclick = ()=>{
       changeSubs('add', document.getElementById('add-user').value);
     };
-    document.getElementById('btn-remove').onclick = ()=> {
+    document.getElementById('btn-remove').onclick = ()=>{
       changeSubs('remove', document.getElementById('remove-user').value);
     };
     document.getElementById('nav-panel').onclick = ()=> switchView('panel');
@@ -581,16 +664,13 @@
         highlightsBtn.onclick = ()=>{
           document.querySelectorAll('#tabs button').forEach(b=>b.classList.remove('active'));
           highlightsBtn.classList.add('active');
-          // show dropdown
           showHighlightSelect();
-          // render first album by default
           const first = item.highlights[0];
           renderGrid(item.snap_user, 'highlights', first.items);
           selectEl.value = first.album;
         };
         tabsEl.append(highlightsBtn);
 
-        // Dropdown container
         const hlContainer = document.createElement('div');
         hlContainer.className = 'highlight-select';
         selectEl = document.createElement('select');
@@ -610,7 +690,6 @@
         hlContainer.append(selectEl);
         tabsEl.append(hlContainer);
 
-        // Helpers to show/hide
         function hideHighlightSelect() {
           document.querySelectorAll('.highlight-select').forEach(el=>el.style.display='none');
         }
@@ -632,7 +711,7 @@
       };
       tabsEl.append(spotBtn);
 
-      // ALL tab last
+      // ALL tab
       const allBtn = document.createElement('button');
       allBtn.textContent = 'All';
       allBtn.dataset.section = 'all';
@@ -644,12 +723,10 @@
       };
       tabsEl.append(allBtn);
 
-      // Clear any existing select display
       if (selectEl) {
         document.querySelectorAll('.highlight-select').forEach(el=>el.style.display='none');
       }
 
-      // By default, activate Stories tab (or if you prefer, you can auto-open All)
       storiesBtn.click();
 
       document.getElementById('panel-view').style.display = 'none';
@@ -662,7 +739,6 @@
     }
 
     function updateUserGallery(entry){
-      // Update tab counts/text
       document.querySelectorAll('#tabs button').forEach(btn=>{
         const sec = btn.dataset.section;
         if (sec==='stories') {
@@ -671,7 +747,6 @@
           btn.textContent = `Spotlights (${(entry.spotlights||[]).length})`;
         } else if (sec==='highlights') {
           btn.textContent = `Highlights`;
-          // update select options
           const selectEl = document.querySelector('.highlight-select select');
           if (selectEl) {
             selectEl.innerHTML = '';
@@ -684,12 +759,9 @@
           }
         }
       });
-      // If currently in story viewer (All), rebuild storyItems
-      if (currentViewingUser) {
-        const activeBtn = document.querySelector('#tabs button.active');
-        if (activeBtn && activeBtn.dataset.section==='all') {
-          openStoryViewer(entry, true);
-        }
+      const activeBtn = document.querySelector('#tabs button.active');
+      if (activeBtn && activeBtn.dataset.section==='all') {
+        openStoryViewer(entry, true);
       }
     }
 
@@ -712,7 +784,6 @@
       });
     }
 
-    // Inline media modal logic
     const mediaModal = document.getElementById('media-modal');
     const mediaContainer = document.getElementById('media-container');
     const downloadBtn = document.getElementById('download-btn');
@@ -752,26 +823,16 @@
       }
     };
 
-    // Story-like viewer logic
     const storyModal = document.getElementById('story-modal');
     const storyMediaContainer = document.getElementById('story-media-container');
     const storyProgressBar = document.getElementById('story-progress');
     const closeStoryBtn = document.getElementById('close-story');
 
     function openStoryViewer(item, isUpdate=false) {
-      // Build storyItems array
       const arr = [];
-      (item.stories||[]).forEach(url=>{
-        arr.push({url, type: inferType(url)});
-      });
-      (item.highlights||[]).forEach(h=>{
-        h.items.forEach(url=>{
-          arr.push({url, type: inferType(url)});
-        });
-      });
-      (item.spotlights||[]).forEach(url=>{
-        arr.push({url, type: inferType(url)});
-      });
+      (item.stories||[]).forEach(url=> arr.push({url, type: inferType(url)}));
+      (item.highlights||[]).forEach(h=> h.items.forEach(url=> arr.push({url, type: inferType(url)})));
+      (item.spotlights||[]).forEach(url=> arr.push({url, type: inferType(url)}));
       storyItems = arr;
       if (!storyItems.length) {
         alert("No media to play");
@@ -781,9 +842,7 @@
         storyIndex = 0;
         showStoryModal();
       } else {
-        // If updating mid-play: if index beyond length, reset
         if (storyIndex >= storyItems.length) storyIndex = 0;
-        // continue playing current or next
         playCurrentStory();
       }
     }
@@ -816,9 +875,7 @@
           const dur = elem.duration * 1000;
           startProgress(dur);
         };
-        elem.onended = ()=>{
-          nextStory();
-        };
+        elem.onended = ()=> nextStory();
       } else {
         elem = document.createElement('img');
         elem.src = url;
@@ -827,9 +884,7 @@
       storyMediaContainer.append(elem);
       storyMediaElem = elem;
       if (type==='image') {
-        storyTimer = setTimeout(()=>{
-          nextStory();
-        }, 5000);
+        storyTimer = setTimeout(()=> nextStory(), 5000);
       }
     }
 
@@ -838,11 +893,9 @@
       storyDuration = duration;
       function update() {
         const elapsed = Date.now() - storyStartTime;
-        const pct = Math.min((elapsed / storyDuration)*100, 100);
+        const pct = Math.min((elapsed / storyDuration) * 100, 100);
         storyProgressBar.style.width = pct + '%';
-        if (pct < 100) {
-          requestAnimationFrame(update);
-        }
+        if (pct < 100) requestAnimationFrame(update);
       }
       requestAnimationFrame(update);
     }
