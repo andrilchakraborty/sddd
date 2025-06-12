@@ -7,232 +7,126 @@ from subprocess import run, CalledProcessError
 from typing import List, Optional
 import asyncio
 
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request, Response
+from fastapi import FastAPI, BackgroundTasks, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from passlib.hash import bcrypt
 
-SERVICE_URL    = "https://snapify-dkzn.onrender.com"    # ← your deployed API URL
+SERVICE_URL    = "https://snapify-dkzn.onrender.com"
 BASE_MEDIA_DIR = "snap_media"
-USERS_FILE     = "users.json"
 SUBS_FILE      = "subscriptions.json"
 _lock          = threading.Lock()
 
-# ─── Ensure storage files exist ────────────────────────────────────────────────
-for file, default in [(USERS_FILE, []), (SUBS_FILE, [])]:
-    if not os.path.isfile(file):
-        with open(file, 'w') as f:
-            json.dump(default, f, indent=2)
+# ─── Ensure subscription storage exists ───────────────────────────────────────
+if not os.path.isfile(SUBS_FILE):
+    with open(SUBS_FILE, "w") as f:
+        json.dump([], f, indent=2)
 
 # ─── FastAPI setup ────────────────────────────────────────────────────────────
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],            # tighten in prod!
+    allow_origins=["*"],    # tighten in prod!
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Mount static media directory
-if not os.path.isdir(BASE_MEDIA_DIR):
-    os.makedirs(BASE_MEDIA_DIR, exist_ok=True)
+# Mount media directory
+os.makedirs(BASE_MEDIA_DIR, exist_ok=True)
 app.mount("/snap_media", StaticFiles(directory=BASE_MEDIA_DIR), name="snap_media")
 
 templates = Jinja2Templates(directory="templates")
-_monitors_started = set()  # track which users already have a monitor loop
 
-# ─── File I/O helpers ────────────────────────────────────────────────────────
-def load_users():
-    with open(USERS_FILE, 'r') as f:
-        return json.load(f)
-
-def save_users(data):
-    with open(USERS_FILE, 'w') as f:
-        json.dump(data, f, indent=2)
-
+# ─── Subscription file ops ───────────────────────────────────────────────────
 def load_subs():
-    with open(SUBS_FILE, 'r') as f:
+    with open(SUBS_FILE, "r") as f:
         return json.load(f)
 
-def save_subs(data):
-    with open(SUBS_FILE, 'w') as f:
-        json.dump(data, f, indent=2)
+def save_subs(subs):
+    with open(SUBS_FILE, "w") as f:
+        json.dump(subs, f, indent=2)
 
-# ─── Pydantic models ─────────────────────────────────────────────────────────
-class RegisterIn(BaseModel):
-    username: str
-    password: str
-
-class LoginIn(BaseModel):
-    username: str
-    password: str
-
+# ─── Models ───────────────────────────────────────────────────────────────────
 class SubscriptionAction(BaseModel):
     snap_users: List[str]
 
-# ─── Authentication ──────────────────────────────────────────────────────────
-def get_current_user(request: Request):
-    username = request.cookies.get("username")
-    if not username:
-        raise HTTPException(status_code=401, detail="Not logged in")
-    users = load_users()
-    if username not in {u["username"] for u in users}:
-        raise HTTPException(status_code=401, detail="Invalid user")
-    return username
+# ─── Download + Start helper ─────────────────────────────────────────────────
+def download_then_start(user: str):
+    """Runs `snapify -u user`, then `snapify start -u user`."""
+    try:
+        run(["snapify", "-u", user], check=True)
+    except CalledProcessError as e:
+        print(f"[one-time] download error for {user}: {e}")
+    # now kick off the long-running monitor
+    try:
+        run(["snapify", "start", "-u", user], check=True)
+    except CalledProcessError as e:
+        print(f"[one-time] start error for {user}: {e}")
 
-# ─── Health‐check ping loop ──────────────────────────────────────────────────
-@app.on_event("startup")
-async def schedule_ping_task():
-    async def ping_loop():
-        async with httpx.AsyncClient(timeout=5) as client:
-            while True:
-                try:
-                    r = await client.get(f"{SERVICE_URL}/ping")
-                    if r.status_code != 200:
-                        print(f"Health ping returned {r.status_code}")
-                except Exception as e:
-                    print(f"External ping failed: {e!r}")
-                await asyncio.sleep(120)
-    asyncio.create_task(ping_loop())
+# ─── Routes ──────────────────────────────────────────────────────────────────
 
-@app.get("/ping")
-async def ping():
-    return {"status": "alive"}
-
-# ─── Serve the SPA + inject API URL ───────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     return templates.TemplateResponse(
         "main.html",
-        {
-            "request": request,
-            "api_url": SERVICE_URL    # ← this gets injected as "{{ api_url }}" in JS
-        }
+        {"request": request, "api_url": SERVICE_URL}
     )
 
-# ─── User registration / login ───────────────────────────────────────────────
-@app.post("/register", status_code=201)
-def register(data: RegisterIn):
-    with _lock:
-        users = load_users()
-        if any(u["username"] == data.username for u in users):
-            raise HTTPException(400, "Username already taken")
-        users.append({
-            "username":      data.username,
-            "password_hash": bcrypt.hash(data.password)
-        })
-        save_users(users)
-    return {"msg": "Registered"}
-
-@app.post("/login")
-def login(data: LoginIn, response: Response):
-    users = load_users()
-    user  = next((u for u in users if u["username"] == data.username), None)
-    if not user or not bcrypt.verify(data.password, user["password_hash"]):
-        raise HTTPException(400, "Incorrect username or password")
-    response.set_cookie("username", data.username, path="/")
-    return {"msg": "Logged in"}
-
-@app.post("/logout")
-def logout(response: Response):
-    response.delete_cookie("username", path="/")
-    return {"msg": "Logged out"}
-
-# ─── Background monitor for snapify downloads ────────────────────────────────
-def monitor_snaps(owner: str, interval: int = 60,
-                  zip_it: bool = False,
-                  only_highlights: bool = False,
-                  only_spotlights: bool = False):
-    while True:
-        subs = load_subs()
-        users_list = [s["snap_user"] for s in subs if s["owner"] == owner]
-        if users_list:
-            cmd = ["snapify", "-u", ",".join(users_list)]
-            if zip_it:        cmd.append("-z")
-            if only_highlights: cmd.append("--highlights")
-            if only_spotlights: cmd.append("-s")
-            try:
-                run(cmd, check=True)
-            except CalledProcessError as e:
-                print(f"[monitor] error for {owner}: {e}")
-        time.sleep(interval)
-
-# ─── Subscription management ─────────────────────────────────────────────────
 @app.post("/users/add")
 def add_subscriptions(
     action: SubscriptionAction,
-    background_tasks: BackgroundTasks,
-    current_user: str = Depends(get_current_user)
+    background_tasks: BackgroundTasks
 ):
     added = []
     with _lock:
         subs = load_subs()
         for su in action.snap_users:
-            if not any(s["owner"] == current_user and s["snap_user"] == su for s in subs):
-                subs.append({"owner": current_user, "snap_user": su})
+            if su not in subs:
+                subs.append(su)
                 added.append(su)
         save_subs(subs)
 
-    # fire off one-time download
-    if added:
-        def one_time_download(lst):
-            try:
-                run(["snapify", "-u", ",".join(lst)], check=False)
-            except CalledProcessError as e:
-                print(f"[one-time] error for {current_user}: {e}")
-
-        threading.Thread(target=one_time_download, args=(added,), daemon=True).start()
-
-    # start background monitor if not already
-    if current_user not in _monitors_started:
-        _monitors_started.add(current_user)
-        background_tasks.add_task(monitor_snaps, current_user)
+    # For each new user, fire off the download+start in background
+    for u in added:
+        background_tasks.add_task(download_then_start, u)
 
     return {"msg": f"Added {len(added)} user(s)", "added": added}
 
 @app.post("/users/remove")
-def remove_subscriptions(
-    action: SubscriptionAction,
-    current_user: str = Depends(get_current_user)
-):
+def remove_subscriptions(action: SubscriptionAction):
     removed = []
     with _lock:
-        subs    = load_subs()
-        new_sub = []
+        subs = load_subs()
+        new_subs = []
         for s in subs:
-            if s["owner"] == current_user and s["snap_user"] in action.snap_users:
-                removed.append(s["snap_user"])
+            if s in action.snap_users:
+                removed.append(s)
             else:
-                new_sub.append(s)
-        save_subs(new_sub)
+                new_subs.append(s)
+        save_subs(new_subs)
     return {"msg": f"Removed {len(removed)} user(s)", "removed": removed}
 
 @app.get("/subscriptions")
-def list_subscriptions(current_user: str = Depends(get_current_user)):
-    subs = load_subs()
-    return {"subscriptions": [s["snap_user"] for s in subs if s["owner"] == current_user]}
+def list_subscriptions():
+    return {"subscriptions": load_subs()}
 
-# ─── Gallery endpoint ───────────────────────────────────────────────────────
 @app.get("/gallery")
-def get_gallery(current_user: str = Depends(get_current_user)):
-    out  = []
-    base = BASE_MEDIA_DIR
-    subs = [s["snap_user"] for s in load_subs() if s["owner"] == current_user]
-
+def get_gallery():
+    out = []
+    subs = load_subs()
     for u in subs:
-        e = {"snap_user": u, "stories": [], "highlights": [], "spotlights": []}
+        entry = {"snap_user": u, "stories": [], "highlights": [], "spotlights": []}
         # Stories
-        sd = os.path.join(base, u, "stories")
+        sd = os.path.join(BASE_MEDIA_DIR, u, "stories")
         if os.path.isdir(sd):
             for fn in sorted(os.listdir(sd)):
                 if fn.lower().endswith((".jpg", ".png", ".mp4")):
-                    e["stories"].append(f"/snap_media/{u}/stories/{fn}")
+                    entry["stories"].append(f"/snap_media/{u}/stories/{fn}")
         # Highlights
-        hr = os.path.join(base, u, "highlights")
+        hr = os.path.join(BASE_MEDIA_DIR, u, "highlights")
         if os.path.isdir(hr):
             for album in sorted(os.listdir(hr)):
                 ap = os.path.join(hr, album)
@@ -243,30 +137,38 @@ def get_gallery(current_user: str = Depends(get_current_user)):
                         if fn.lower().endswith((".jpg", ".png", ".mp4"))
                     ]
                     if items:
-                        e["highlights"].append({"album": album, "items": items})
+                        entry["highlights"].append({"album": album, "items": items})
         # Spotlights
-        sp = os.path.join(base, u, "spotlights")
+        sp = os.path.join(BASE_MEDIA_DIR, u, "spotlights")
         if os.path.isdir(sp):
             for fn in sorted(os.listdir(sp)):
                 if fn.lower().endswith((".jpg", ".png", ".mp4")):
-                    e["spotlights"].append(f"/snap_media/{u}/spotlights/{fn}")
-
-        out.append(e)
-
+                    entry["spotlights"].append(f"/snap_media/{u}/spotlights/{fn}")
+        out.append(entry)
     return {"gallery": out}
 
 @app.post("/monitor/start")
 def start_monitor(
     background_tasks: BackgroundTasks,
-    current_user: str = Depends(get_current_user),
     interval: Optional[int] = 300,
     zip_it: Optional[bool] = False,
     highlights: Optional[bool] = False,
     spotlights: Optional[bool] = False,
 ):
-    if current_user not in _monitors_started:
-        _monitors_started.add(current_user)
-        background_tasks.add_task(
-            monitor_snaps, current_user, interval, zip_it, highlights, spotlights
-        )
-    return {"msg": "Monitoring started", "interval": interval}
+    # Start a background monitor that loops `snapify start` forever
+    def loop_start():
+        while True:
+            subs = load_subs()
+            if subs:
+                cmd = ["snapify", "start", "-u", ",".join(subs)]
+                if zip_it:         cmd.append("-z")
+                if highlights:     cmd.append("--highlights")
+                if spotlights:     cmd.append("-s")
+                try:
+                    run(cmd, check=True)
+                except CalledProcessError as e:
+                    print(f"[monitor start] error: {e}")
+            time.sleep(interval)
+
+    background_tasks.add_task(loop_start)
+    return {"msg": "Global monitoring started", "interval": interval}
