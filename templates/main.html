@@ -2,158 +2,250 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SnapViewer (Global)</title>
   <style>
+    /* Variables */
     :root {
-      --yellow: #FFFC00;
-      --black: #111;
-      --white: #FFF;
-      --font: 'Segoe UI', sans-serif;
+      --snap-yellow: #FFFC00;
+      --snap-black: #000;
+      --snap-white: #FFF;
+      --snap-gray: #1C1C1E;
+      --snap-dark: #121212;
+      --font-sans: 'Segoe UI', sans-serif;
+      --transition-fast: 0.2s ease-in-out;
+      --radius: 12px;
     }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    /* Global Reset */
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family: var(--font);
-      background: var(--yellow);
-      color: var(--black);
-      height: 100vh;
+      font-family: var(--font-sans);
+      background: var(--snap-yellow);
+      color: var(--snap-black);
       display: grid;
-      grid-template-columns: 200px 1fr;
+      grid-template-columns: 240px 1fr;
+      height: 100vh;
+      overflow: hidden;
     }
+    button, select { font-family: var(--font-sans); }
+    /* Sidebar */
     .sidebar {
-      background: var(--black);
-      color: var(--yellow);
+      background: var(--snap-black);
+      color: var(--snap-yellow);
       display: flex;
       flex-direction: column;
     }
     .sidebar h2 {
-      padding: 1rem;
-      border-bottom: 1px solid #333;
-      font-size: 1.2rem;
+      padding: 1.5rem 1rem;
+      font-size: 1.4rem;
+      text-align: center;
+      border-bottom: 1px solid #222;
     }
     .nav-item {
-      padding: 0.8rem 1rem;
+      padding: 1rem;
       cursor: pointer;
-      border-bottom: 1px solid #333;
+      border-bottom: 1px solid #222;
+      transition: background var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    .nav-item.active,
-    .nav-item:hover {
+    .nav-item svg { width: 20px; height:20px; }
+    .nav-item.active, .nav-item:hover {
       background: #222;
     }
+    /* Main content */
     .main {
-      padding: 1rem;
-      overflow: hidden;
+      background: var(--snap-dark);
       display: flex;
       flex-direction: column;
-      height: 100%;
+      padding: 1rem;
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #1a1a1a;
-      color: var(--yellow);
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
+      background: #1A1A1A;
+      padding: 0.8rem 1rem;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+      margin-bottom: 1rem;
+    }
+    header h1 {
+      font-size: 1.2rem;
+      color: var(--snap-white);
     }
     .logout {
       background: none;
-      border: 1px solid var(--yellow);
-      color: var(--yellow);
-      padding: 0.3rem 0.8rem;
-      border-radius: 4px;
+      border: 1px solid var(--snap-yellow);
+      color: var(--snap-yellow);
+      padding: 0.4rem 0.8rem;
+      border-radius: var(--radius);
       cursor: pointer;
+      transition: background var(--transition-fast), color var(--transition-fast);
     }
+    .logout:hover {
+      background: var(--snap-yellow);
+      color: var(--snap-black);
+    }
+    /* Panel view */
     .panel {
-      margin-top: 1rem;
-      background: #1a1a1a;
+      background: #1A1A1A;
       padding: 1rem;
-      border-radius: 4px;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
     }
-    .panel input {
+    .panel h3 { color: var(--snap-yellow); margin-bottom: 0.8rem; }
+    .panel input, .panel select {
       width: 100%;
-      padding: 0.5rem;
+      padding: 0.6rem;
+      margin-bottom: 0.8rem;
       border: none;
-      border-radius: 4px;
-      margin-bottom: 0.5rem;
+      border-radius: var(--radius);
+      background: #2A2A2A;
+      color: var(--snap-white);
+      transition: background var(--transition-fast);
+    }
+    .panel input:focus {
+      background: #333;
+      outline: none;
     }
     .panel button {
       width: 100%;
-      padding: 0.6rem;
+      padding: 0.8rem;
       border: none;
-      border-radius: 4px;
-      background: var(--yellow);
-      color: var(--black);
+      border-radius: var(--radius);
+      background: var(--snap-yellow);
+      color: var(--snap-black);
       font-weight: bold;
       cursor: pointer;
+      transition: transform var(--transition-fast);
+    }
+    .panel button:active {
+      transform: scale(0.98);
     }
     .status {
       margin-top: 0.5rem;
-      color: #080;
+      color: #4CAF50;
       font-size: 0.9rem;
     }
+    /* Albums list */
     .albums-list {
-      margin-top: 1rem;
-      background: #1a1a1a;
-      border-radius: 4px;
-      overflow: auto;
+      background: #1A1A1A;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+      overflow-y: auto;
       flex: 1;
     }
-    .albums-list .user-item {
-      padding: 0.7rem 1rem;
-      border-bottom: 1px solid #333;
+    .user-item {
+      padding: 1rem;
+      border-bottom: 1px solid #222;
       cursor: pointer;
-      color: var(--yellow);
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      transition: background var(--transition-fast);
     }
-    .albums-list .user-item:hover {
-      background: #222;
+    .user-item:hover {
+      background: #333;
     }
-    .gallery-container {
-      margin-top: 1rem;
+    .user-item span {
+      color: var(--snap-yellow);
+      font-size: 1rem;
+    }
+    /* Gallery view */
+    .gallery-view {
       display: flex;
       flex-direction: column;
       flex: 1;
-      overflow: auto;
+    }
+    .back-button {
+      align-self: start;
+      background: #2A2A2A;
+      color: var(--snap-yellow);
+      border: none;
+      padding: 0.6rem 1rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+      margin-bottom: 0.5rem;
+    }
+    .back-button:hover {
+      background: #333;
+    }
+    .gallery-title {
+      color: var(--snap-white);
+      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
     }
     .tabs {
       display: flex;
       gap: 0.5rem;
-      flex-wrap: wrap;
       position: relative;
+      border-bottom: 2px solid #333;
+      margin-bottom: 0.8rem;
     }
     .tabs button {
-      background: #333;
-      color: var(--yellow);
+      background: none;
       border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
+      padding: 0.6rem 1rem;
+      color: var(--snap-gray);
+      font-weight: bold;
       cursor: pointer;
+      position: relative;
+      transition: color var(--transition-fast);
     }
     .tabs button.active {
-      background: var(--yellow);
-      color: var(--black);
+      color: var(--snap-yellow);
+    }
+    .tabs button.active::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--snap-yellow);
+      border-radius: var(--radius);
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+    .highlight-select {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: #2A2A2A;
+      border-radius: var(--radius);
+      padding: 0.5rem;
+      display: none;
+    }
+    .highlight-select select {
+      border-radius: var(--radius);
+      background: #333;
+      color: var(--snap-white);
+      border: none;
+      padding: 0.4rem;
     }
     .gallery-grid {
-      margin-top: 1rem;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       gap: 0.8rem;
-      overflow: auto;
+      overflow-y: auto;
       flex: 1;
     }
     .story-card {
-      background: #fff;
-      border-radius: 4px;
+      background: #2A2A2A;
+      border-radius: var(--radius);
       overflow: hidden;
       cursor: pointer;
-      display: flex;
-      flex-direction: column;
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .story-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
     .story-thumb {
       width: 100%;
@@ -162,181 +254,177 @@
       background-position: center;
     }
     .story-info {
-      padding: 0.4rem;
-      background: #1a1a1a;
-      color: var(--yellow);
+      padding: 0.6rem;
       text-align: center;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
+      color: var(--snap-white);
+      background: #1A1A1A;
     }
-    .back-button {
-      margin-top: 0.5rem;
-      background: #333;
-      color: var(--yellow);
-      border: none;
-      padding: 0.4rem 0.8rem;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    #media-modal {
+    /* Modals */
+    #media-modal,
+    #story-modal {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0,0,0,0.8);
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.85);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 1000;
+      animation: fadeIn 0.3s ease-out;
     }
-    #media-modal .modal-content {
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .modal-content {
       position: relative;
       max-width: 90vw;
       max-height: 90vh;
+      background: #1A1A1A;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.7);
       display: flex;
       flex-direction: column;
       align-items: center;
     }
-    #media-modal img, #media-modal video {
+    .modal-content img,
+    .modal-content video {
       max-width: 100%;
       max-height: 80vh;
-      border-radius: 4px;
-      background: #000;
+      border-radius: var(--radius);
+      background: var(--snap-black);
     }
-    #media-modal .modal-buttons {
-      margin-top: 0.5rem;
+    .modal-buttons {
       display: flex;
       gap: 1rem;
+      margin: 1rem 0;
     }
-    #media-modal .modal-buttons a,
-    #media-modal .modal-buttons button {
-      background: var(--yellow);
-      color: var(--black);
+    .modal-buttons a,
+    .modal-buttons button {
+      padding: 0.6rem 1.2rem;
       border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-      text-decoration: none;
+      border-radius: var(--radius);
       font-weight: bold;
+      cursor: pointer;
+      transition: transform var(--transition-fast);
     }
-    #media-modal .modal-buttons button {
-      background: #f33;
-      color: #fff;
+    .modal-buttons a {
+      background: var(--snap-yellow);
+      color: var(--snap-black);
+      text-decoration: none;
     }
-    #story-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0,0,0,0.9);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 1100;
+    .modal-buttons button {
+      background: #F33;
+      color: var(--snap-white);
     }
-    #story-modal video, #story-modal img {
-      max-width: 90vw;
-      max-height: 80vh;
-      border-radius: 4px;
-      background: #000;
+    .modal-buttons a:active,
+    .modal-buttons button:active {
+      transform: scale(0.98);
     }
+    #close-modal,
+    #close-story {
+      position: absolute;
+      top: 12px; right: 12px;
+      background: transparent;
+      border: none;
+      color: var(--snap-white);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: transform var(--transition-fast);
+    }
+    #close-modal:hover,
+    #close-story:hover {
+      transform: scale(1.1);
+    }
+    /* Story modal specifics */
     #story-modal .progress-bar-container {
       position: absolute;
-      top: 20px;
-      left: 10%;
-      width: 80%;
-      height: 5px;
+      top: 20px; left: 5%;
+      width: 90%; height: 4px;
       background: rgba(255,255,255,0.3);
-      border-radius: 2px;
+      border-radius: var(--radius);
     }
     #story-modal .progress-bar {
       width: 0%;
       height: 100%;
-      background: var(--yellow);
-      border-radius: 2px;
+      background: var(--snap-yellow);
+      border-radius: var(--radius);
       transition: width 0.1s linear;
     }
     #story-modal .close-story {
-      position: absolute;
-      top: 10px;
-      right: 20px;
-      background: #f33;
-      color: #fff;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 4px;
-      cursor: pointer;
-      z-index: 1200;
-    }
-    .highlight-select {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      background: #333;
-      color: var(--yellow);
-      border: 1px solid #555;
-      border-radius: 4px;
-      display: none;
-      z-index: 100;
-    }
-    .highlight-select select {
-      background: #333;
-      color: var(--yellow);
-      border: none;
-      padding: 0.4rem;
+      color: var(--snap-white);
+      background: rgba(0,0,0,0.6);
+      padding: 0.4rem 0.8rem;
     }
   </style>
 </head>
 <body>
   <div class="sidebar">
     <h2>Snapify (Global)</h2>
-    <div id="nav-panel" class="nav-item active">Panel</div>
-    <div id="nav-albums" class="nav-item">Albums</div>
+    <div id="nav-panel" class="nav-item active">
+      <svg viewBox="0 0 24 24"><path fill="currentColor" d="M5 3h14v2H5V3m0 4h10v2H5V7m0 4h14v2H5v-2m0 4h10v2H5v-2z"/></svg>
+      Panel
+    </div>
+    <div id="nav-albums" class="nav-item">
+      <svg viewBox="0 0 24 24"><path fill="currentColor" d="M4 6h16v2H4V6m0 4h16v2H4v-2m0 4h16v2H4v-2z"/></svg>
+      Albums
+    </div>
   </div>
   <div class="main">
     <header>
-      <div>Global Gallery — all users</div>
+      <h1>Global Gallery — All Users</h1>
       <button id="refresh-btn" class="logout">Refresh</button>
     </header>
+
+    <!-- PANEL VIEW -->
     <div id="panel-view" class="panel">
-      <h3>Add / Remove Users</h3>
-      <input id="add-user" placeholder="Add usernames, comma-sep">
-      <button id="btn-add">Add</button>
-      <input id="remove-user" placeholder="Remove usernames, comma-sep" style="margin-top:0.8rem;">
-      <button id="btn-remove">Remove</button>
+      <h3>Manage Subscriptions</h3>
+      <input id="add-user" placeholder="Add usernames (comma-separated)" />
+      <button id="btn-add">Add Users</button>
+      <input id="remove-user" placeholder="Remove usernames (comma-separated)" />
+      <button id="btn-remove">Remove Users</button>
       <div class="status" id="status-msg"></div>
     </div>
-    <div id="albums-view" style="display:none; flex:1; flex-direction:column;">
-      <h3>Subscribed Users</h3>
+
+    <!-- ALBUMS VIEW -->
+    <div id="albums-view" class="gallery-view" style="display:none;">
+      <h3 style="color:var(--snap-white); margin-bottom:0.5rem;">Subscribed Users</h3>
       <div class="albums-list" id="albums-list"></div>
     </div>
-    <div id="gallery-view" style="display:none; flex:1; flex-direction:column;">
-      <button class="back-button" id="back-button">← Back to Albums</button>
-      <h3 id="gallery-title">Media</h3>
-      <div class="gallery-container">
-        <div class="tabs" id="tabs"></div>
-        <div class="gallery-grid" id="gallery-grid"></div>
-      </div>
+
+    <!-- GALLERY VIEW -->
+    <div id="gallery-view" class="gallery-view" style="display:none;">
+      <button id="back-button" class="back-button">← Back to Albums</button>
+      <h3 class="gallery-title" id="gallery-title">Media</h3>
+      <div class="tabs" id="tabs"></div>
+      <div class="highlight-select" id="highlight-select"></div>
+      <div class="gallery-grid" id="gallery-grid"></div>
     </div>
   </div>
+
+  <!-- MEDIA MODAL -->
   <div id="media-modal">
     <div class="modal-content">
+      <button id="close-modal" title="Close">&times;</button>
       <div id="media-container"></div>
       <div class="modal-buttons">
         <a id="download-btn" href="#" download>Download</a>
-        <button id="close-modal">Close</button>
+        <button id="close-modal-btn">Close</button>
       </div>
     </div>
   </div>
+
+  <!-- STORY MODAL -->
   <div id="story-modal">
-    <button class="close-story" id="close-story">Close</button>
+    <button id="close-story" title="Close">&times;</button>
     <div class="progress-bar-container">
       <div class="progress-bar" id="story-progress"></div>
     </div>
     <div id="story-media-container"></div>
   </div>
+
   <script>
     const API = "{{ api_url }}";
 
@@ -392,7 +480,7 @@
       list.forEach(u=>{
         const div = document.createElement('div');
         div.className = 'user-item';
-        div.textContent = u;
+        div.innerHTML = `<span>${u}</span>`;
         div.onclick = () => openUserGallery(u);
         container.append(div);
       });
@@ -412,6 +500,7 @@
 
       const tabsEl = document.getElementById('tabs');
       tabsEl.innerHTML = '';
+      document.getElementById('highlight-select').style.display = 'none';
 
       const storiesBtn = document.createElement('button');
       storiesBtn.textContent = `Stories (${item.stories.length})`;
@@ -422,11 +511,10 @@
       };
       tabsEl.append(storiesBtn);
 
-      let selectEl, hlContainer;
       if (item.highlights.length){
-        hlContainer = document.createElement('div');
-        hlContainer.className = 'highlight-select';
-        selectEl = document.createElement('select');
+        const hlContainer = document.getElementById('highlight-select');
+        const selectEl = document.createElement('select');
+        hlContainer.innerHTML = '';
         item.highlights.forEach(h=>{
           const o = document.createElement('option');
           o.value = h.album;
@@ -439,7 +527,6 @@
           renderGrid(album.items);
         };
         hlContainer.append(selectEl);
-        tabsEl.append(hlContainer);
 
         const highlightsBtn = document.createElement('button');
         highlightsBtn.textContent = 'Highlights';
@@ -505,6 +592,7 @@
     const mediaContainer = document.getElementById('media-container');
     const downloadBtn = document.getElementById('download-btn');
     const closeModalBtn = document.getElementById('close-modal');
+    const closeModalBtn2 = document.getElementById('close-modal-btn');
 
     function openMediaModal(url){
       mediaContainer.innerHTML = '';
@@ -523,7 +611,7 @@
       mediaModal.style.display = 'flex';
     }
 
-    closeModalBtn.onclick = ()=>{
+    closeModalBtn.onclick = closeModalBtn2.onclick = ()=>{
       mediaModal.style.display = 'none';
       mediaContainer.innerHTML = '';
     };
@@ -539,15 +627,26 @@
 
     function openStoryViewer(item){
       storyItems = [];
-      item.stories.forEach(u=>storyItems.push({url:u,type:'image'}));
-      item.highlights.forEach(h=>h.items.forEach(u=>storyItems.push({url:u,type:'image'})));
-      item.spotlights.forEach(u=>storyItems.push({url:u,type:'video'}));
+      // add stories
+      item.stories.forEach(url=>{
+        const isVideo = ['.mp4','.webm','.ogg'].some(ext=>url.toLowerCase().endsWith(ext));
+        storyItems.push({url, type: isVideo?'video':'image'});
+      });
+      // add highlights
+      item.highlights.forEach(h=>{
+        h.items.forEach(url=>{
+          const isVideo = ['.mp4','.webm','.ogg'].some(ext=>url.toLowerCase().endsWith(ext));
+          storyItems.push({url, type: isVideo?'video':'image'});
+        });
+      });
+      // add spotlights
+      item.spotlights.forEach(url=>{
+        const isVideo = ['.mp4','.webm','.ogg'].some(ext=>url.toLowerCase().endsWith(ext));
+        storyItems.push({url, type: isVideo?'video':'image'});
+      });
+
       if (!storyItems.length) { alert("No media"); return; }
       storyIndex = 0;
-      showStoryModal();
-    }
-
-    function showStoryModal(){
       storyModal.style.display = 'flex';
       playCurrentStory();
     }
@@ -558,7 +657,7 @@
       storyProgressBar.style.width = '0%';
       const {url,type} = storyItems[storyIndex];
       let el;
-      if (type === 'video'){
+      if (type==='video'){
         el = document.createElement('video');
         el.src = url;
         el.autoplay = true;
@@ -578,7 +677,7 @@
       (function update(){
         const pct = Math.min((Date.now()-storyStartTime)/storyDuration*100,100);
         storyProgressBar.style.width = pct+'%';
-        if (pct < 100) requestAnimationFrame(update);
+        if (pct<100) requestAnimationFrame(update);
       })();
       if (storyItems[storyIndex].type==='image'){
         storyTimer = setTimeout(nextStory, storyDuration);
@@ -588,7 +687,7 @@
     function nextStory(){
       clearTimeout(storyTimer);
       storyIndex++;
-      if (storyIndex < storyItems.length) playCurrentStory();
+      if (storyIndex<storyItems.length) playCurrentStory();
       else closeStoryViewer();
     }
 
