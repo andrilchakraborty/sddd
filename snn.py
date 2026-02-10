@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-SERVICE_URL    = "https://snapify-dkzn.onrender.com"
+SERVICE_URL    = "https://sddd-2qot.onrender.com/"
 BASE_MEDIA_DIR = "snap_media"
 SUBS_FILE      = "subscriptions.json"
 _lock          = threading.Lock()
@@ -172,3 +172,4 @@ def start_monitor(
 
     background_tasks.add_task(loop_start)
     return {"msg": "Global monitoring started", "interval": interval}
+
